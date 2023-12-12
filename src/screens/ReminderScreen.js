@@ -32,6 +32,7 @@ export default function ReminderScreen({navigation}) {
         soundName: 'default',
         importance: 4,
         vibrate: true,
+        
       },
       (created) => console.log(`Channel created: ${created}`),
     );
@@ -57,7 +58,12 @@ export default function ReminderScreen({navigation}) {
     setShowDateButtons(!showDateButtons);
     setSelectedRepeatOption(null);
   };
-
+  const deleteReminder = (index) => {
+    const updatedReminders = [...reminders];
+    updatedReminders.splice(index, 1);
+    setReminders(updatedReminders);
+  };
+  
   const clearTimeCategorySelection = () => {
     setSelectedDate(null);
     setSelectedTime(null);
@@ -72,37 +78,57 @@ export default function ReminderScreen({navigation}) {
     setDatePickerVisible(false);
   };
 
+// ... (your existing code)
 
-  const addReminder = () => {
-    if (selectedDate) {
-      if (selectedTime) {
-        const dateTime = new Date(selectedDate);
-        dateTime.setHours(selectedTime.getHours());
-        dateTime.setMinutes(selectedTime.getMinutes());
+// ... (your existing code)
 
-        const newReminder = {
-          date: dateTime,
-          note: noteText,
-          title: inputText,
-        };
- PushNotification.localNotification({
-          channelId: "channel-id",
-          title: newReminder.title,
-          message: newReminder.note,
-          date: newReminder.date,
-        });
+const addReminder = () => {
+  if (!inputText) {
+    alert('Please enter a title for the reminder.');
+    return;
+  }
 
-        setReminders([...reminders, newReminder]);
-        setNoteText('');
-        setSelectedDate(null);
-        setSelectedTime(null);
-        setShowNoteInput(false);
-      } else {
-        alert('Please select a time for the reminder.');
-      }
+  if (selectedDate) {
+    if (selectedTime) {
+      const dateTime = new Date(selectedDate);
+      dateTime.setHours(selectedTime.getHours());
+      dateTime.setMinutes(selectedTime.getMinutes());
+
+      const newReminder = {
+        date: dateTime,
+        note: noteText,
+        title: inputText,
+      };
+
+      PushNotification.localNotificationSchedule({
+        channelId: 'channel-id',
+        title: newReminder.title,
+        message: newReminder.note,
+        date: newReminder.date,
+      });
+
+      setReminders([...reminders, newReminder]);
+
+      // Reset all fields to their initial state
+      setNoteText('');
+      setInputText('');
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setShowNoteInput(false);
+      setShowDateButtons(false);
+      setTimePickerVisible(false);
+      setDatePickerVisible(false);
+      setIsTimeCategorySelected(false);
+    } else {
+      alert('Please select a time for the reminder.');
     }
-  };
- 
+  } else {
+    alert('Please select a date for the reminder.');
+  }
+};
+
+  
+  
   const hideTimePicker = () => {
     setTimePickerVisible(false);
   };
@@ -162,8 +188,8 @@ export default function ReminderScreen({navigation}) {
         <TextInput
           style={styles.inputField}
           placeholder="ADD REMINDER HERE...."
-          onChangeText={setInputText}
-        />
+          onChangeText={(text) => setInputText(text)}
+          />
         {showNoteInput && (
           <View style={styles.noteInputContainer}>
             <TextInput
@@ -224,17 +250,23 @@ export default function ReminderScreen({navigation}) {
         </TouchableHighlight>
       </ScrollView>
       <FlatList
-        data={reminders}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.reminderItem}>
-            <Text style={styles.reminderTitle}>Title: {item.title}</Text>
-            <Text style={styles.reminderDate}>Date: {item.date.toDateString()}</Text>
-            <Text style={styles.reminderTime}>Time: {item.date.toLocaleTimeString()}</Text>
-            <Text style={styles.reminderNote}>Note: {item.note}</Text>
-          </View>
-        )}
-      />
+  data={reminders}
+  keyExtractor={(item, index) => index.toString()}
+  renderItem={({ item, index }) => (
+    <View style={styles.reminderItem}>
+      <Text style={styles.reminderTitle}>Title: {item.title}</Text>
+      <Text style={styles.reminderDate}>Date: {item.date.toDateString()}</Text>
+      <Text style={styles.reminderTime}>Time: {item.date.toLocaleTimeString()}</Text>
+      <Text style={styles.reminderNote}>Note: {item.note}</Text>
+      <TouchableHighlight onPress={() => deleteReminder(index)}>
+        <View style={styles.deleteButtonContainer}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </View>
+      </TouchableHighlight>
+    </View>
+  )}
+/>
+
 
       <TimePickerModal
         isVisible={isTimePickerVisible}
@@ -325,6 +357,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: '90%',
     justifyContent: 'space-around', 
+  },
+  deleteButtonContainer: {
+    // backgroundColor: 'red',
+    padding: 10,
+    marginTop: 10,
+    borderRadius: 5,
+    
+    borderColor:"black",
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    color: 'black',
+    fontWeight: 'bold',
   },
   buttonContainerTwo: {
     flexDirection: 'row',

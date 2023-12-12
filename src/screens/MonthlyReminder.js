@@ -7,7 +7,8 @@ import { Calendar} from 'react-native-calendars';
 
 
 
-export default function MonthlyReminder() {
+
+export default function MonthlyReminder({navigation}) {
   const [selectedDuration, setSelectedDuration] = useState('');
   const [selectedWeekDuration,setSelectedWeekDuration] = useState('1');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -74,16 +75,24 @@ export default function MonthlyReminder() {
    
   ];
   const handleDateConfirm = (date, isStartDate) => {
+    const currentDate = new Date(); 
+  
+    if (date < currentDate) {
+      date = currentDate; 
+    }
+  
     if (isStartDate) {
       setSelectedStartDate(date);
-      setChosenStartDate(date.toDateString()); // Convert to a string representation
+      setChosenStartDate(date.toDateString()); 
     } else {
       setSelectedEndDate(date);
-      setChosenEndDate(date.toDateString()); // Convert to a string representation
+      setChosenEndDate(date.toDateString()); 
     }
+  
     hideStartDatePicker();
     hideEndDatePicker();
   };
+  
   
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
@@ -121,13 +130,7 @@ export default function MonthlyReminder() {
     setIsDropdownOpenWeekly(!isDropdownOpenWeekly);
   };
 
-  const toggleMonthSelection = (month) => {
-    if (selectedMonths.includes(month)) {
-      setSelectedMonths(selectedMonths.filter((selectedMonth) => selectedMonth !== month));
-    } else {
-      setSelectedMonths([...selectedMonths, month]);
-    }
-  };
+ 
   const showStartDatePicker = () => {
     setStartDatePickerVisible(true);
   };
@@ -187,25 +190,240 @@ export default function MonthlyReminder() {
   };
   const handleHourChange = (text) => {
     const numericValue = parseInt(text, 10);
-    if (!isNaN(numericValue) && numericValue >= 1 && numericValue <= 23) {
+    if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 23) {
       setHour(numericValue.toString());
       setHourError('');
     } else {
-      setHour(numericValue.toString());
+      setHour('');  
       setHourError('Hour must be between 1 and 23');
     }
   };
-
+  
   const handleMinuteChange = (text) => {
     const numericValue = parseInt(text, 10);
-    if (!isNaN(numericValue) && numericValue >= 1 && numericValue <= 59) {
+    if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 59) {
       setMinute(numericValue.toString());
       setMinuteError('');
     } else {
-      setMinute(numericValue.toString());
+      setMinute('');  
       setMinuteError('Minute must be between 1 and 59');
     }
   };
+ 
+  const handleDatePress = (date) => {
+    const updatedDates = { ...selectedDates };
+    if (updatedDates[date]) {
+      delete updatedDates[date];
+    } else {
+      updatedDates[date] = { selected: true };
+    }
+    setSelectedDates(updatedDates);
+  };
+ 
+
+  const filterIntervalsByDuration = (intervals, selectedDuration) => {
+    const filteredIntervals = [];
+  
+    // Logic to filter intervals based on selected duration
+    switch (selectedDuration) {
+      case '1':
+        // No filtering, intervals remain unchanged
+        return intervals;
+      case '2':
+        // Filter intervals for every 2 months
+        return filterIntervalsByGap(intervals, 2);
+      case '3':
+        // Filter intervals for every 3 months
+        return filterIntervalsByGap(intervals, 3);
+      // Add more cases for other durations as needed
+      default:
+        return intervals;
+    }
+  };
+  
+  const filterIntervalsByGap = (intervals, gapInWeeks) => {
+    const filteredIntervals = [];
+    const seenDates = new Set();
+  
+    // Logic to filter intervals based on the specified gap in weeks
+    for (let i = 0; i < intervals.length; i++) {
+      const currentDate = intervals[i].date;
+  
+      // Check if the current date has not been seen within the specified gap
+      if (!seenDates.has(currentDate)) {
+        filteredIntervals.push(intervals[i]);
+  
+        // Mark dates within the gap as seen to avoid duplication
+        for (let j = 1; j < gapInWeeks; j++) {
+          const nextDate = new Date(currentDate);
+          nextDate.setDate(nextDate.getDate() + j * 7);
+  
+          seenDates.add(nextDate.toDateString());
+        }
+      }
+    }
+  
+    return filteredIntervals;
+  };
+
+
+  
+  const setReminderTwo = () => {
+    if (
+      selectedStartDate &&
+      selectedEndDate &&
+      selectedStartTime &&
+      selectedEndTime &&
+      hour &&
+      minute &&
+      selectedDates &&
+      Object.keys(selectedDates).length > 0
+    ) {
+      const startDateTime = new Date(
+        selectedStartDate.getFullYear(),
+        selectedStartDate.getMonth(),
+        selectedStartDate.getDate(),
+        selectedStartTime.getHours(),
+        selectedStartTime.getMinutes()
+      );
+  
+      const endDateTime = new Date(
+        selectedEndDate.getFullYear(),
+        selectedEndDate.getMonth(),
+        selectedEndDate.getDate(),
+        selectedEndTime.getHours(),
+        selectedEndTime.getMinutes()
+      );
+  
+      const intervalInMillis = (parseInt(hour) * 60 + parseInt(minute)) * 60 * 1000;
+  
+      let currentDateTime = new Date(startDateTime);
+  
+      const intervals = [];
+  
+      while (currentDateTime <= endDateTime) {
+        const currentDate = new Date(currentDateTime);
+        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+  
+        const endDate = new Date(currentDate);
+        endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
+  
+        while (currentDate <= endDate) {
+          intervals.push({
+            date: currentDate.toDateString(),
+            time: currentDate.toLocaleTimeString(),
+          });
+          currentDate.setTime(currentDate.getTime() + intervalInMillis);
+        }
+  
+        currentDateTime.setDate(currentDateTime.getDate() + 1); // Move to the next day
+        currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+      }
+      const temp = Object.keys(selectedDates).map(x => parseInt(x));
+      // console.log("Selecteddates",temp)
+      const filteredData = intervals.filter(item => {
+        const date = new Date(item.date);
+
+          return temp.includes(date.getDate());
+      });
+      // console.log('Intervals:', intervals);
+
+      console.log(filteredData)
+      
+      navigation.navigate('Details', {
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
+        selectedStartTime: selectedStartTime,
+        selectedEndTime: selectedEndTime,
+        hour: hour,
+        minute: minute,
+        selectedDuration: selectedDuration,
+        selectedWeeks: selectedWeeks,
+        selectedDates: selectedDates,
+      });
+      
+    } else {
+      console.warn('Incomplete data for calculation');
+    }
+  };
+  const setReminder = () => {
+    if (
+      selectedStartDate &&
+      selectedEndDate &&
+      selectedStartTime &&
+      selectedEndTime &&
+      hour &&
+      minute &&
+      selectedWeekDuration &&
+      selectedWeeks.length > 0
+    ) {
+      const startDateTime = new Date(
+        selectedStartDate.getFullYear(),
+        selectedStartDate.getMonth(),
+        selectedStartDate.getDate(),
+        selectedStartTime.getHours(),
+        selectedStartTime.getMinutes()
+      );
+  
+      const endDateTime = new Date(
+        selectedEndDate.getFullYear(),
+        selectedEndDate.getMonth(),
+        selectedEndDate.getDate(),
+        selectedEndTime.getHours(),
+        selectedEndTime.getMinutes()
+      );
+  
+      const intervalInMillis = (parseInt(hour) * 60 + parseInt(minute)) * 60 * 1000;
+      const weeklyDurationInWeeks = parseInt(selectedWeekDuration);
+  
+      let currentDateTime = new Date(startDateTime);
+  
+      const intervals = [];
+  
+      while (currentDateTime <= endDateTime) {
+        const currentDayOfWeek = currentDateTime.getDay();
+        const currentDayName = weeks[currentDayOfWeek];
+  
+        if (selectedWeeks.includes(currentDayName)) {
+          const currentDate = new Date(currentDateTime);
+          currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+  
+          const endDate = new Date(currentDate);
+          endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
+  
+          while (currentDate <= endDate) {
+            intervals.push({
+              date: currentDate.toDateString(),
+              time: currentDate.toLocaleTimeString(),
+            });
+            currentDate.setTime(currentDate.getTime() + intervalInMillis);
+          }
+        }
+  
+        currentDateTime.setDate(currentDateTime.getDate() + 1); // Move to the next day
+        currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+      }
+
+      // console.log('Intervals:', intervals);
+      const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
+
+      console.log('Filtered Intervals:', filteredIntervals);
+      navigation.navigate('Details', {
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
+        selectedStartTime: selectedStartTime,
+        selectedEndTime: selectedEndTime,
+        hour: hour,
+        minute: minute,
+        selectedDuration: selectedDuration,
+        selectedWeeks: selectedWeeks,
+        selectedDates: selectedDates,
+      });
+    } else {
+      console.warn('Incomplete data for calculation');
+    }
+  };
+  
   
   return (
     <View style={styles.container}>
@@ -215,22 +433,6 @@ export default function MonthlyReminder() {
       <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
-      <View style={styles.rowContainer}>
-      <Text style={{ color: 'black', paddingTop: '6%' }}>MONTHS:</Text>
-      
-
-      <ModalDropdown
-  options={duration.map((item) => item.label)}
-  style={styles.customButtonDrop}
-  defaultValue={selectedDuration || "Select Duration"} 
-  onSelect={(index, value) => handleDurationSelect(index, duration[index].value)}
-  textStyle={styles.dropdownText}
-  dropdownStyle={styles.dropdownContainer}
-  defaultIndex={0} 
-/>
-
-
-    </View>
      
       <View style={styles.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
@@ -293,7 +495,22 @@ export default function MonthlyReminder() {
       <View style={styles.rowContainer}>
   {selectedOption === 'week' ? (
     <View>
-        <View style={styles.rowContainer}>
+       <View style={styles.rowContainer}>
+      <Text style={{ color: 'black', paddingTop: '6%' }}>WEEKS:</Text>
+      
+
+    <ModalDropdown
+  options={duration.map((item) => item.label)}
+  style={styles.customButtonDrop}
+  defaultValue={selectedDuration || 'Select Duration'}
+  onSelect={(index, value) => handleDurationSelect(index, duration[index].value)}
+  textStyle={styles.dropdownText}
+  dropdownStyle={styles.dropdownContainer}
+  defaultIndex={0}
+/>
+    </View>
+     
+        {/* <View style={styles.rowContainer}>
       <Text style={{ color: 'black', paddingTop: '5%' }}>WEEKS:</Text>
 
       <ModalDropdown
@@ -307,7 +524,7 @@ export default function MonthlyReminder() {
 />
 
 
-      </View>
+      </View> */}
       <View style={{...styles.rowContainer}}>
       <Text style={{ color: 'black', paddingTop: '9%' }}>DAYS:</Text>
         <View style={{...styles.monthChooser,marginLeft:"10%"}}>
@@ -344,12 +561,27 @@ export default function MonthlyReminder() {
       transparent={false}
     >
       <View style={styles.modalContainer}>
-        <Calendar
-          onDayPress={handleDayPress}
-          monthFormat={'yyyy MM'}
-          theme={calendarTheme}
-          markedDates={selectedDates}
-        />
+      <View style={{ padding: 20 }}>
+        <Text >CHOOSE DATES
+      {Object.keys(selectedDates).join(', ')}
+    </Text>
+          {/* Display a list of dates from 1 to 31 */}
+          {/* <Text style={{ marginBottom: 10 }}>Select dates:</Text> */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+  {Array.from({ length: 31 }, (_, index) => index + 1).map((date) => (
+    <Button
+      key={date}
+      title={date.toString()}
+      onPress={() => handleDatePress(date)}
+      style={{
+        margin: 5,
+        backgroundColor: selectedDates[date] ? 'blue' : 'white',
+        color: selectedDates[date] ? 'white' : 'black',
+      }}
+    />
+  ))}
+</View>
+</View>
         <Button
        
           title="Done"
@@ -396,8 +628,16 @@ export default function MonthlyReminder() {
       {/* <Text style={styles.errorText}>{hourError}</Text>
       <Text style={styles.errorText}>{minuteError}</Text> */}
     </View>
-<TouchableOpacity style={styles.customButtonDone}>
-  <Text style={{...styles.customButtonText,fontWeight:"bold"}}>Done</Text>
+    <TouchableOpacity style={styles.customButtonDone} onPress={() => {
+  if (selectedOption === 'week') {
+    setReminder();
+  } else if (selectedOption === 'day') {
+    setReminderTwo();
+  } else {
+    console.warn('Please select an option before setting a reminder');
+  }
+}}>
+  <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
 </TouchableOpacity>
 
 
