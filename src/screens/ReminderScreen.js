@@ -6,9 +6,10 @@ import PushNotification from 'react-native-push-notification';
 import { PermissionsAndroid } from 'react-native';
 
 
+
 export default function ReminderScreen({navigation}) {
   const [showNoteInput, setShowNoteInput] = useState(false);
-  const [inputText, setInputText] = useState(false);
+  const [inputText, setInputText] = useState('');
   const [noteText, setNoteText] = useState('');
   const [showDateButtons, setShowDateButtons] = useState(false);
   const [selectedRepeatOption, setSelectedRepeatOption] = useState(null);
@@ -21,22 +22,22 @@ export default function ReminderScreen({navigation}) {
   const [isSettingUpcomingTime, setSettingUpcomingTime] = useState(false); // New state variable
   const [isSettingUpcomingDate, setSettingUpcomingDate] = useState(false);
   const [isTimeCategorySelected, setIsTimeCategorySelected] = useState(false);
-  useEffect(() => {
-    // Create a notification channel
-    PushNotification.localNotification(
-      {
-        channelId: 'channel-id',
-        channelName: 'Reminders Channel',
-        channelDescription: 'Channel for reminder notifications',
-        playSound: true,
-        soundName: 'default',
-        importance: 4,
-        vibrate: true,
-        
-      },
-      (created) => console.log(`Channel created: ${created}`),
-    );
-  }, []);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isEditing, setIsEditing] = useState(false); // Add this line
+  const [editingIndex, setEditingIndex] = useState(null); 
+
+useEffect(()=>{
+  createChannels();
+},[]);
+const createChannels = () =>{
+  PushNotification.createChannel(
+    {
+      channelId:"test-channel",
+      channelName:"Test Channel"
+    }
+  )
+}
+
   
   const setUpcomingDate = () => {
     setDatePickerVisible(true);
@@ -69,7 +70,7 @@ export default function ReminderScreen({navigation}) {
     setSelectedTime(null);
     setShowDateButtons(false);
     setTimePickerVisible(false); // Add this line to hide the time picker
-    setDatePickerVisible(false); // Add this line to hide the date picker
+    setDatePickerVisible(false); 
     setIsTimeCategorySelected(false);
   };
   
@@ -78,54 +79,62 @@ export default function ReminderScreen({navigation}) {
     setDatePickerVisible(false);
   };
 
-// ... (your existing code)
 
-// ... (your existing code)
-
-const addReminder = () => {
-  if (!inputText) {
-    alert('Please enter a title for the reminder.');
-    return;
-  }
-
-  if (selectedDate) {
-    if (selectedTime) {
-      const dateTime = new Date(selectedDate);
-      dateTime.setHours(selectedTime.getHours());
-      dateTime.setMinutes(selectedTime.getMinutes());
-
-      const newReminder = {
-        date: dateTime,
-        note: noteText,
-        title: inputText,
-      };
-
-      PushNotification.localNotificationSchedule({
-        channelId: 'channel-id',
-        title: newReminder.title,
-        message: newReminder.note,
-        date: newReminder.date,
-      });
-
-      setReminders([...reminders, newReminder]);
-
-      // Reset all fields to their initial state
-      setNoteText('');
-      setInputText('');
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setShowNoteInput(false);
-      setShowDateButtons(false);
-      setTimePickerVisible(false);
-      setDatePickerVisible(false);
-      setIsTimeCategorySelected(false);
-    } else {
-      alert('Please select a time for the reminder.');
+  const addReminder = () => {
+    if (!inputText) {
+      setErrorMessage('Please enter a title for the reminder.');
+      return;
     }
-  } else {
-    alert('Please select a date for the reminder.');
-  }
-};
+  
+    if (selectedDate) {
+      if (selectedTime) {
+        const dateTime = new Date(selectedDate);
+        dateTime.setHours(selectedTime.getHours());
+        dateTime.setMinutes(selectedTime.getMinutes());
+  
+        const newReminder = {
+          date: dateTime,
+          note: noteText,
+          title: inputText,
+        };
+  
+        if (isEditing) {
+          // Editing an existing reminder
+          const updatedReminders = [...reminders];
+          updatedReminders[editingIndex] = newReminder; // Replace the reminder at the specified index
+          setReminders(updatedReminders);
+          setIsEditing(false); // Reset the editing flag
+        } else {
+          // Adding a new reminder
+          PushNotification.localNotificationSchedule({
+            channelId: 'test-channel',
+            title: newReminder.title,
+            message: newReminder.note,
+            date: newReminder.date,
+          });
+  
+          setReminders([...reminders, newReminder]);
+        }
+  
+        // Reset all fields to their initial state
+        setNoteText('');
+        setInputText('');
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setShowNoteInput(false);
+        setShowDateButtons(false);
+        setTimePickerVisible(false);
+        setDatePickerVisible(false);
+        setIsTimeCategorySelected(false);
+        setErrorMessage('');
+      } else {
+        alert('Please select a time for the reminder.');
+      }
+    } else {
+      alert('Please select a date for the reminder.');
+    }
+  };
+  
 
   
   
@@ -137,11 +146,30 @@ const addReminder = () => {
 
   const setTodayTime = () => {
     const today = new Date();
+  
+    // Clearing seconds and milliseconds for precise comparison
     today.setSeconds(0);
+    today.setMilliseconds(0);
+  
+    const now = new Date();
+    if (selectedDate && selectedDate.toDateString() === now.toDateString() && selectedDate < now) {
+      // Allow reopening without the alert
+      setSelectedTime(null);
+      setShowDateButtons(false);
+      setSelectedDate(today);
+      setTimePickerVisible(true);
+      return;
+    }
+  
+    // If no warning is needed, proceed as usual
+    setSelectedTime(null);
     setSelectedDate(today);
     setShowDateButtons(false);
     setTimePickerVisible(true);
   };
+  
+  
+  
 
   const setTomorrowTime = () => {
     const tomorrow = new Date();
@@ -152,10 +180,33 @@ const addReminder = () => {
     setTimePickerVisible(true);
   };
   const handleTimeConfirm = (time) => {
+    const selectedDateTime = new Date(selectedDate);
+    selectedDateTime.setHours(time.getHours());
+    selectedDateTime.setMinutes(time.getMinutes());
+  
+    const now = new Date();
+  
+    if (selectedDateTime < now) {
+      alert('Please select a time in the future.');
+      return;
+    }
+  
+    // Reset the selected time to null to allow reopening after warning
     setSelectedTime(time);
     hideTimePicker();
-    setIsTimeCategorySelected(true); // Set to true when a time is selected
+    setIsTimeCategorySelected(true);
   };
+  const editReminder = (index) => {
+    const reminderToEdit = reminders[index];
+    setInputText(reminderToEdit.title);
+    setNoteText(reminderToEdit.note);
+    setSelectedDate(reminderToEdit.date);
+    setSelectedTime(reminderToEdit.date);
+    setIsEditing(true); // Set the editing flag
+    setEditingIndex(index); // Set the index of the reminder being edited
+    // Additional logic as needed to open pickers etc.
+  };
+  
   
   const openFrequencyButtons = (option) => {
     if (option === 'Daily' || option === 'Hourly' || option === 'Weekly' || option === 'Monthly' || option === 'Yearly') {
@@ -187,18 +238,31 @@ const addReminder = () => {
         <Text style={styles.heading}>ReminderScreen</Text>
         <TextInput
           style={styles.inputField}
+          value={inputText}
           placeholder="ADD REMINDER HERE...."
-          onChangeText={(text) => setInputText(text)}
-          />
+          onChangeText={(text) => {
+            const words = text.split(' ').slice(0, 15);
+            setInputText(words.join(' '));
+            setErrorMessage(''); // Clear the error message when the user types
+          }}
+        />
+        
+        {errorMessage ? (
+          <Text  style={{color:"red"}}>{errorMessage}</Text>
+        ) : null}
         {showNoteInput && (
           <View style={styles.noteInputContainer}>
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Add a note..."
-              value={noteText}
-              onChangeText={setNoteText}
-              multiline={true}
-            />
+           <TextInput
+          style={styles.noteInput}
+          placeholder="Add a note..."
+          value={noteText}
+          multiline={true}
+  onChangeText={(text) => {
+    // Limit the note to 50 words
+    const words = text.split(' ').slice(0, 50);
+    setNoteText(words.join(' '));
+  }}
+/>
           </View>
         )}
         <View style={styles.buttonContainer}>
@@ -263,27 +327,36 @@ const addReminder = () => {
           <Text style={styles.deleteButtonText}>Delete</Text>
         </View>
       </TouchableHighlight>
+      <TouchableHighlight onPress={() => editReminder(index)}>
+  <View style={styles.deleteButtonContainer}>
+    <Text style={styles.deleteButtonText}>Edit</Text>
+  </View>
+</TouchableHighlight>
     </View>
   )}
 />
 
 
-      <TimePickerModal
-        isVisible={isTimePickerVisible}
-        mode="time"
-        onConfirm={handleTimeConfirm}
-        onCancel={() => {
-          hideTimePicker();
-          setSettingUpcomingTime(false);
-        }}
-      />
 
- <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleDateConfirm}
-          onCancel={hideDatePicker}
-        />
+<TimePickerModal
+  isVisible={isTimePickerVisible}
+  mode="time"
+  onConfirm={handleTimeConfirm}
+  onCancel={() => {
+    hideTimePicker();
+    setSettingUpcomingTime(false);
+  }}
+  date={new Date()}
+  />
+
+<DateTimePickerModal
+  isVisible={isDatePickerVisible}
+  mode="date"
+  onConfirm={handleDateConfirm}
+  onCancel={hideDatePicker}
+  defaultDate={new Date()} 
+/>
+
     </View>
   );
 }
@@ -298,10 +371,10 @@ const CustomButton = ({ title, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop:"40%",
+    paddingTop:"10%",
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20, 
+    // padding: 10, 
   },
   heading: {
     fontSize: 24,
@@ -318,7 +391,7 @@ const styles = StyleSheet.create({
   },
   reminderItem: {
     backgroundColor: 'white',
-    padding: 10,
+    padding: 1,
     marginBottom: 10,
     borderRadius: 5,
     shadowColor: '#000',
@@ -328,17 +401,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   reminderTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   reminderDate: {
-    fontSize: 14,
+    fontSize: 12,
   },
   reminderTime: {
-    fontSize: 14,
+    fontSize: 12,
   },
   reminderNote: {
-    fontSize: 16,
+    fontSize: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -360,8 +433,8 @@ const styles = StyleSheet.create({
   },
   deleteButtonContainer: {
     // backgroundColor: 'red',
-    padding: 10,
-    marginTop: 10,
+    padding: 3,
+    marginTop: 3,
     borderRadius: 5,
     
     borderColor:"black",

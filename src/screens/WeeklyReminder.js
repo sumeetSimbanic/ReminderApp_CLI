@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,TextInput} from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,TextInput,Modal,ScrollView} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -31,7 +31,12 @@ export default function WeeklyReminder() {
   const [minuteError, setMinuteError] = useState('');
 
  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [intervals, setIntervals] = useState([]);
 
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
   const weeks = [
    'S','M','T','W','TH','F','ST'
@@ -86,19 +91,7 @@ export default function WeeklyReminder() {
   };
  
  
-  const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
-  };
   
-
-  const showStartDatePicker = () => {
-    setStartDatePickerVisible(true);
-  };
-
-  const showEndDatePicker = () => {
-    setEndDatePickerVisible(true);
-  };
-
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
   };
@@ -106,7 +99,21 @@ export default function WeeklyReminder() {
   const hideEndDatePicker = () => {
     setEndDatePickerVisible(false);
   };
-
+  const showStartDatePicker = () => {
+    setStartDatePickerVisible(true);
+  };
+  
+  const showEndDatePicker = () => {
+    setEndDatePickerVisible(true);
+  };
+  
+  const showStartTimePicker = () => {
+    setStartTimePickerVisibility(true);
+  };
+  
+  const showEndTimePicker = () => {
+    setEndTimePickerVisibility(true);
+  };
   
   // Function to hide the start time picker
   const hideStartTimePicker = () => {
@@ -116,9 +123,7 @@ export default function WeeklyReminder() {
   // Function to handle the selected start time
  
   // Function to show the end time picker
-  const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
-  };
+
 
   // Function to hide the end time picker
   const hideEndTimePicker = () => {
@@ -212,6 +217,9 @@ export default function WeeklyReminder() {
 
       console.log('Intervals:', intervals);
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
+
+      setIntervals(filteredIntervals);
+      toggleModal();
 
       console.log('Filtered Intervals:', filteredIntervals);
 
@@ -375,34 +383,59 @@ export default function WeeklyReminder() {
 <TouchableOpacity style={styles.customButtonDone} onPress={setReminder}>
   <Text style={{...styles.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
-
+<Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => {
+          toggleModal();
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Intervals:</Text>
+            {intervals.map((interval, index) => (
+              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      
 
       <DateTimePickerModal
-        isVisible={isStartDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, true)}
-        onCancel={hideStartDatePicker}
-      />
+  isVisible={isStartDatePickerVisible}
+  mode="date"
+  onConfirm={(date) => handleDateConfirm(date, true)}
+  onCancel={hideStartDatePicker}
+  date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+/>
 
-      <DateTimePickerModal
-        isVisible={isEndDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, false)}
-        onCancel={hideEndDatePicker}
-      />
-          <DateTimePickerModal
-        isVisible={isStartTimePickerVisible}
-        mode="time"
-        onConfirm={handleStartTimeConfirm}
-        onCancel={hideStartTimePicker}
-      />
+<DateTimePickerModal
+  isVisible={isEndDatePickerVisible}
+  mode="date"
+  onConfirm={(date) => handleDateConfirm(date, false)}
+  onCancel={hideEndDatePicker}
+  date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+/>
 
-      <DateTimePickerModal
-        isVisible={isEndTimePickerVisible}
-        mode="time"
-        onConfirm={handleEndTimeConfirm}
-        onCancel={hideEndTimePicker}
-      />
+<DateTimePickerModal
+  isVisible={isStartTimePickerVisible}
+  mode="time"
+  onConfirm={handleStartTimeConfirm}
+  onCancel={hideStartTimePicker}
+  date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
+/>
+
+<DateTimePickerModal
+  isVisible={isEndTimePickerVisible}
+  mode="time"
+  onConfirm={handleEndTimeConfirm}
+  onCancel={hideEndTimePicker}
+  date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
+/>
 
     </View>
   );
@@ -543,6 +576,24 @@ color:"red",
   selectedMonthOption: {
     backgroundColor: 'blue',
   },
-  
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  closeButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
 });
 
