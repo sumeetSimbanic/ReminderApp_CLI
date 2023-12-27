@@ -39,6 +39,12 @@ export default function MonthlyReminder({navigation}) {
   const [minuteError, setMinuteError] = useState('');
 
  
+  const [isNewModalVisible, setNewModalVisible] = useState(false);
+  const [intervals, setIntervals] = useState([]);
+
+  const toggleModal = () => {
+    setNewModalVisible(!isNewModalVisible);
+  };
 
   const months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'June',
@@ -119,9 +125,7 @@ export default function MonthlyReminder({navigation}) {
   const selectMonth = (month) => {
     setSelectedMonth(month);
   };
-  const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
-  };
+
   
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -130,14 +134,26 @@ export default function MonthlyReminder({navigation}) {
     setIsDropdownOpenWeekly(!isDropdownOpenWeekly);
   };
 
- 
   const showStartDatePicker = () => {
     setStartDatePickerVisible(true);
   };
-
+  
   const showEndDatePicker = () => {
     setEndDatePickerVisible(true);
   };
+  
+  const showStartTimePicker = () => {
+    setStartTimePickerVisibility(true);
+  };
+  
+  const showEndTimePicker = () => {
+    setEndTimePickerVisibility(true);
+  };
+  
+  // Inside your JSX, use the selected times as defaults for the pickers
+ 
+  
+ 
 
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
@@ -156,9 +172,7 @@ export default function MonthlyReminder({navigation}) {
   // Function to handle the selected start time
  
   // Function to show the end time picker
-  const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
-  };
+
 
   // Function to hide the end time picker
   const hideEndTimePicker = () => {
@@ -327,20 +341,24 @@ export default function MonthlyReminder({navigation}) {
           return temp.includes(date.getDate());
       });
       // console.log('Intervals:', intervals);
+      // console.log('Filtered Intervals:', filteredIntervals);
+      const filteredIntervals = filterIntervalsByDuration(filteredData, selectedDuration);
 
-      console.log(filteredData)
+      setIntervals(filteredIntervals);
+      console.log("fliterdata",filteredData)
+      toggleModal();
+
       
-      navigation.navigate('Details', {
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        selectedStartTime: selectedStartTime,
-        selectedEndTime: selectedEndTime,
-        hour: hour,
-        minute: minute,
-        selectedDuration: selectedDuration,
-        selectedWeeks: selectedWeeks,
-        selectedDates: selectedDates,
-      });
+      // navigation.navigate('Details', {
+      //   startDateTime: startDateTime,
+      //   endDateTime: endDateTime,
+      //   selectedStartTime: selectedStartTime,
+      //   selectedEndTime: selectedEndTime,
+      //   hour: hour,
+      //   minute: minute,
+      //   selectedDuration: selectedDuration,
+      //   selectedWeeks: selectedWeeks,
+    // });
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -408,17 +426,20 @@ export default function MonthlyReminder({navigation}) {
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
 
       console.log('Filtered Intervals:', filteredIntervals);
-      navigation.navigate('Details', {
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        selectedStartTime: selectedStartTime,
-        selectedEndTime: selectedEndTime,
-        hour: hour,
-        minute: minute,
-        selectedDuration: selectedDuration,
-        selectedWeeks: selectedWeeks,
-        selectedDates: selectedDates,
-      });
+      setIntervals(filteredIntervals);
+      toggleModal();
+
+      // navigation.navigate('Details', {
+      //   startDateTime: startDateTime,
+      //   endDateTime: endDateTime,
+      //   selectedStartTime: selectedStartTime,
+      //   selectedEndTime: selectedEndTime,
+      //   hour: hour,
+      //   minute: minute,
+      //   selectedDuration: selectedDuration,
+      //   selectedWeeks: selectedWeeks,
+      //   selectedDates: selectedDates,
+      // });
     } else {
       console.warn('Incomplete data for calculation');
     }
@@ -638,35 +659,60 @@ export default function MonthlyReminder({navigation}) {
   }
 }}>
   <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
+  <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isNewModalVisible}
+        onRequestClose={() => {
+          toggleModal();
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Intervals:</Text>
+            {intervals.map((interval, index) => (
+              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 </TouchableOpacity>
 
 
-      <DateTimePickerModal
-        isVisible={isStartDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, true)}
-        onCancel={hideStartDatePicker}
-      />
-
-      <DateTimePickerModal
-        isVisible={isEndDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, false)}
-        onCancel={hideEndDatePicker}
-      />
-          <DateTimePickerModal
-        isVisible={isStartTimePickerVisible}
-        mode="time"
-        onConfirm={handleStartTimeConfirm}
-        onCancel={hideStartTimePicker}
-      />
-
-      <DateTimePickerModal
-        isVisible={isEndTimePickerVisible}
-        mode="time"
-        onConfirm={handleEndTimeConfirm}
-        onCancel={hideEndTimePicker}
-      />
+<DateTimePickerModal
+    isVisible={isStartDatePickerVisible}
+    mode="date"
+    onConfirm={(date) => handleDateConfirm(date, true)}
+    onCancel={hideStartDatePicker}
+    date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isEndDatePickerVisible}
+    mode="date"
+    onConfirm={(date) => handleDateConfirm(date, false)}
+    onCancel={hideEndDatePicker}
+    date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isStartTimePickerVisible}
+    mode="time"
+    onConfirm={handleStartTimeConfirm}
+    onCancel={hideStartTimePicker}
+    date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isEndTimePickerVisible}
+    mode="time"
+    onConfirm={handleEndTimeConfirm}
+    onCancel={hideEndTimePicker}
+    date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
+  />
 
     </View>
   );
@@ -848,6 +894,25 @@ color:"red",
     width: 80,
     height:40, 
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  closeButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
   },
 });
 
