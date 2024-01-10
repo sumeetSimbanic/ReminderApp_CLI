@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
+import React, { startTransition, useState } from 'react';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -39,6 +39,12 @@ export default function MonthlyReminder({navigation}) {
   const [minuteError, setMinuteError] = useState('');
 
  
+  const [isNewModalVisible, setNewModalVisible] = useState(false);
+  const [intervals, setIntervals] = useState([]);
+
+  const toggleModal = () => {
+    setNewModalVisible(!isNewModalVisible);
+  };
 
   const months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'June',
@@ -93,7 +99,9 @@ export default function MonthlyReminder({navigation}) {
     hideEndDatePicker();
   };
   
-  
+  const navigateToMainScreen = () => {
+    navigation.navigate("Home");
+  };
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
     setChosenStartTime(time.toLocaleTimeString()); // Convert to a string representation
@@ -119,9 +127,7 @@ export default function MonthlyReminder({navigation}) {
   const selectMonth = (month) => {
     setSelectedMonth(month);
   };
-  const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
-  };
+
   
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -130,14 +136,26 @@ export default function MonthlyReminder({navigation}) {
     setIsDropdownOpenWeekly(!isDropdownOpenWeekly);
   };
 
- 
   const showStartDatePicker = () => {
     setStartDatePickerVisible(true);
   };
-
+  
   const showEndDatePicker = () => {
     setEndDatePickerVisible(true);
   };
+  
+  const showStartTimePicker = () => {
+    setStartTimePickerVisibility(true);
+  };
+  
+  const showEndTimePicker = () => {
+    setEndTimePickerVisibility(true);
+  };
+  
+  // Inside your JSX, use the selected times as defaults for the pickers
+ 
+  
+ 
 
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
@@ -156,9 +174,7 @@ export default function MonthlyReminder({navigation}) {
   // Function to handle the selected start time
  
   // Function to show the end time picker
-  const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
-  };
+
 
   // Function to hide the end time picker
   const hideEndTimePicker = () => {
@@ -327,20 +343,28 @@ export default function MonthlyReminder({navigation}) {
           return temp.includes(date.getDate());
       });
       // console.log('Intervals:', intervals);
+      // console.log('Filtered Intervals:', filteredIntervals);
+      const filteredIntervals = filterIntervalsByDuration(filteredData, selectedDuration);
 
-      console.log(filteredData)
-      
+      setIntervals(filteredIntervals);
+      console.log("fliterdata",filteredData)
+      toggleModal();
+
+      const startTimestamp = startDateTime.getTime();
+const endTimestamp = endDateTime.getTime();
+
       navigation.navigate('Details', {
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
+        startDateTime: startTimestamp,
+        endDateTime: endTimestamp,
         selectedStartTime: selectedStartTime,
         selectedEndTime: selectedEndTime,
         hour: hour,
         minute: minute,
         selectedDuration: selectedDuration,
         selectedWeeks: selectedWeeks,
-        selectedDates: selectedDates,
-      });
+        intervals:intervals,
+    });
+    console.log("---",startDateTime)
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -408,6 +432,9 @@ export default function MonthlyReminder({navigation}) {
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
 
       console.log('Filtered Intervals:', filteredIntervals);
+      setIntervals(filteredIntervals);
+      toggleModal();
+
       navigation.navigate('Details', {
         startDateTime: startDateTime,
         endDateTime: endDateTime,
@@ -418,19 +445,41 @@ export default function MonthlyReminder({navigation}) {
         selectedDuration: selectedDuration,
         selectedWeeks: selectedWeeks,
         selectedDates: selectedDates,
+        intervals:intervals,
       });
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
   
   
   return (
     <View style={styles.container}>
-        
 
-      <Text style={styles.title}>MONTHLY</Text>
-      <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
+
+  <Text style={styles.title}>MONTHLY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>      
+    <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
      
@@ -613,14 +662,14 @@ export default function MonthlyReminder({navigation}) {
 <View style={{...styles.rowContainer}}>
       <TextInput
         style={{...styles.input,marginLeft:"32%"}}
-        placeholder="1-23"
+        placeholder="0-23"
         onChangeText={handleHourChange}
         value={hour}
         keyboardType="numeric"
       />
       <TextInput
         style={styles.input}
-        placeholder="1-59"
+        placeholder="0-59"
         onChangeText={handleMinuteChange}
         value={minute}
         keyboardType="numeric"
@@ -634,39 +683,76 @@ export default function MonthlyReminder({navigation}) {
   } else if (selectedOption === 'day') {
     setReminderTwo();
   } else {
-    console.warn('Please select an option before setting a reminder');
-  }
+Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );  }
 }}>
   <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
+  <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isNewModalVisible}
+        onRequestClose={() => {
+          toggleModal();
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Intervals:</Text>
+            {intervals.map((interval, index) => (
+
+              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 </TouchableOpacity>
 
 
-      <DateTimePickerModal
-        isVisible={isStartDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, true)}
-        onCancel={hideStartDatePicker}
-      />
-
-      <DateTimePickerModal
-        isVisible={isEndDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, false)}
-        onCancel={hideEndDatePicker}
-      />
-          <DateTimePickerModal
-        isVisible={isStartTimePickerVisible}
-        mode="time"
-        onConfirm={handleStartTimeConfirm}
-        onCancel={hideStartTimePicker}
-      />
-
-      <DateTimePickerModal
-        isVisible={isEndTimePickerVisible}
-        mode="time"
-        onConfirm={handleEndTimeConfirm}
-        onCancel={hideEndTimePicker}
-      />
+<DateTimePickerModal
+    isVisible={isStartDatePickerVisible}
+    mode="date"
+    onConfirm={(date) => handleDateConfirm(date, true)}
+    onCancel={hideStartDatePicker}
+    date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isEndDatePickerVisible}
+    mode="date"
+    onConfirm={(date) => handleDateConfirm(date, false)}
+    onCancel={hideEndDatePicker}
+    date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isStartTimePickerVisible}
+    mode="time"
+    onConfirm={handleStartTimeConfirm}
+    onCancel={hideStartTimePicker}
+    date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isEndTimePickerVisible}
+    mode="time"
+    onConfirm={handleEndTimeConfirm}
+    onCancel={hideEndTimePicker}
+    date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
+  />
 
     </View>
   );
@@ -697,7 +783,14 @@ color:"red",
     marginTop: "3%",
 
   },
- 
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
+  },
   pickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -848,6 +941,25 @@ color:"red",
     width: 80,
     height:40, 
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  closeButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
   },
 });
 

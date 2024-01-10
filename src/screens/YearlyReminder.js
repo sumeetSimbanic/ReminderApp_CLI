@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,Alert, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -8,7 +8,7 @@ import { Calendar} from 'react-native-calendars';
 
 
 
-export default function YearlyReminder() {
+export default function YearlyReminder({ navigation }) {
   const [selectedDuration, setSelectedDuration] = useState('');
   const [selectedWeekDuration,setSelectedWeekDuration] = useState('1');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -93,6 +93,9 @@ export default function YearlyReminder() {
     hideEndDatePicker();
   };
   
+  const navigateToMainScreen = () => {
+    navigation.navigate("Home");
+  };
   
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
@@ -273,8 +276,19 @@ export default function YearlyReminder() {
       console.log('Filtered Intervals:', filteredIntervals);
 
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
   const handleDatePress = (date) => {
     const updatedDates = { ...selectedDates };
@@ -403,8 +417,19 @@ export default function YearlyReminder() {
       
       
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
   
   
@@ -413,8 +438,19 @@ export default function YearlyReminder() {
     <View style={styles.container}>
         
 
-      <Text style={styles.title}>YEARLY</Text>
-      <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} months</Text>
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
+
+  <Text style={styles.title}>YEARLY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>    
+        <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} months</Text>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
      
@@ -597,14 +633,14 @@ export default function YearlyReminder() {
 <View style={{...styles.rowContainer}}>
       <TextInput
         style={{...styles.input,marginLeft:"32%"}}
-        placeholder="1-23"
+        placeholder="0-23"
         onChangeText={handleHourChange}
         value={hour}
         keyboardType="numeric"
       />
       <TextInput
         style={styles.input}
-        placeholder="1-59"
+        placeholder="0-59"
         onChangeText={handleMinuteChange}
         value={minute}
         keyboardType="numeric"
@@ -618,8 +654,19 @@ export default function YearlyReminder() {
   } else if (selectedOption === 'day') {
     setReminderTwo();
   } else {
-    console.warn('Please select an option before setting a reminder');
-  }
+    Alert.alert(
+      'Error',
+      'Incomplete data to set Reminder',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Reopen the end date picker to set the correct end date
+            // reopenEndDatePicker(); // Reopen end date picker
+          },
+        },
+      ]
+    );  }
 }}>
   <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
 </TouchableOpacity>
@@ -696,6 +743,14 @@ color:"red",
     justifyContent: 'center',
     
 
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
   },
   monthOption: {
     width: '15%',

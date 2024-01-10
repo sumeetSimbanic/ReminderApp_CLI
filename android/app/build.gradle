@@ -1,5 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+
 
 
 /**
@@ -107,8 +109,6 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-implementation project(':react-native-push-notification')
-implementation 'com.google.firebase:firebase-analytics'
 implementation 'com.google.firebase:firebase-messaging'
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")

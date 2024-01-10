@@ -9,6 +9,7 @@ import MonthlyReminder from './src/screens/MonthlyReminder';
 import YearlyReminder from './src/screens/YearlyReminder';
 import PushNotification from 'react-native-push-notification';
 import DetailScreen from './src/helper/DetailScreen';
+import OnceListing from './src/screens/OnceListing';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,10 +21,13 @@ const App = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={ReminderScreen} />
         <Stack.Screen name="Hourly" component={HourlyReminder} />
+
         <Stack.Screen name="Daily" component={DailyReminder} />
         <Stack.Screen name="Weekly" component={WeeklyReminder} />
         <Stack.Screen name="Monthly" component={MonthlyReminder} />
         <Stack.Screen name="Yearly" component={YearlyReminder} />
+        <Stack.Screen name="OnceListing" component={OnceListing} />
+
         <Stack.Screen name="Details" component={DetailScreen}/>
       </Stack.Navigator>
     </NavigationContainer>

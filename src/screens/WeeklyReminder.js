@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,TextInput} from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,TextInput,Modal,ScrollView,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 
 
-export default function WeeklyReminder() {
+export default function WeeklyReminder({ navigation }) {
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
@@ -13,6 +13,8 @@ export default function WeeklyReminder() {
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [selectedWeekDuration, setSelectedWeekDuration] = useState("1");
   const [selectedDuration, setSelectedDuration] = useState('');
+  const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
+
 
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
@@ -31,7 +33,12 @@ export default function WeeklyReminder() {
   const [minuteError, setMinuteError] = useState('');
 
  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [intervals, setIntervals] = useState([]);
 
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
   const weeks = [
    'S','M','T','W','TH','F','ST'
@@ -45,23 +52,8 @@ export default function WeeklyReminder() {
     { label: '4', value: '4' },
     { label: '5', value: '5' },   
   ];
-  const handleDateConfirm = (date, isStartDate) => {
-    const currentDate = new Date(); 
-  
-    if (date < currentDate) {
-      date = currentDate; 
-    }
-  
-    if (isStartDate) {
-      setSelectedStartDate(date);
-      setChosenStartDate(date.toDateString()); 
-    } else {
-      setSelectedEndDate(date);
-      setChosenEndDate(date.toDateString()); 
-    }
-  
-    hideStartDatePicker();
-    hideEndDatePicker();
+  const navigateToMainScreen = () => {
+    navigation.navigate("Home");
   };
   
   
@@ -75,6 +67,8 @@ export default function WeeklyReminder() {
     setSelectedEndTime(time);
     setChosenEndTime(time.toLocaleTimeString()); // Convert to a string representation
     hideEndTimePicker();
+    setIsEndTimeSelected(true); // Set the flag when the end time is selected
+
   };
   
   const toggleWeekSelection = (week) => {
@@ -85,20 +79,46 @@ export default function WeeklyReminder() {
     }
   };
  
- 
-  const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
-  };
-  
-
-  const showStartDatePicker = () => {
-    setStartDatePickerVisible(true);
-  };
-
-  const showEndDatePicker = () => {
+  const reopenEndDatePicker = () => {
     setEndDatePickerVisible(true);
   };
-
+  
+  const handleDateConfirm = (date, isStartDate) => {
+    const currentDate = new Date(); // Get the current date and time
+  
+    if (date < currentDate) {
+      date = currentDate; // Set the selected date to the current date
+    }
+  
+    if (isStartDate) {
+      setSelectedStartDate(date);
+      setChosenStartDate(date.toDateString()); // Convert to a string representation
+    } else {
+      if (date < selectedStartDate) {
+        Alert.alert(
+          'Error',
+          'End date should be greater than or equal to the start date',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Reopen the end date picker to set the correct end date
+                reopenEndDatePicker(); // Reopen end date picker
+              },
+            },
+          ]
+        );
+        hideEndDatePicker(); // Hide the incorrect end date picker
+        return; // Don't update the end date if it's before the start date
+      }
+  
+      setSelectedEndDate(date);
+      setChosenEndDate(date.toDateString()); // Convert to a string representation
+    }
+    hideStartDatePicker();
+    hideEndDatePicker();
+  };
+  
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
   };
@@ -106,7 +126,21 @@ export default function WeeklyReminder() {
   const hideEndDatePicker = () => {
     setEndDatePickerVisible(false);
   };
-
+  const showStartDatePicker = () => {
+    setStartDatePickerVisible(true);
+  };
+  
+  const showEndDatePicker = () => {
+    setEndDatePickerVisible(true);
+  };
+  
+  const showStartTimePicker = () => {
+    setStartTimePickerVisibility(true);
+  };
+  
+  const showEndTimePicker = () => {
+    setEndTimePickerVisibility(true);
+  };
   
   // Function to hide the start time picker
   const hideStartTimePicker = () => {
@@ -116,9 +150,7 @@ export default function WeeklyReminder() {
   // Function to handle the selected start time
  
   // Function to show the end time picker
-  const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
-  };
+
 
   // Function to hide the end time picker
   const hideEndTimePicker = () => {
@@ -213,11 +245,25 @@ export default function WeeklyReminder() {
       console.log('Intervals:', intervals);
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
 
+      setIntervals(filteredIntervals);
+      toggleModal();
+
       console.log('Filtered Intervals:', filteredIntervals);
 
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
 
 
@@ -268,14 +314,55 @@ export default function WeeklyReminder() {
     return filteredIntervals;
   };
   
-
+  const renderHourMinuteInputs = () => {
+    if (isEndTimeSelected) {
+      return (
+        <View>
+          <View style={styles.rowContainer}>
+            <Text style={{ color: 'black', marginTop: "5%" }}>EVERY</Text>
+            <Text style={{ color: 'black', marginTop: "5%" }}>HOUR</Text>
+            <Text style={{ color: 'black', marginTop: "5%" }}>MINUTE</Text>
+          </View>
+          <View style={{ ...styles.rowContainer }}>
+            <TextInput
+              style={{ ...styles.input, marginLeft: "32%" }}
+              placeholder="0-23"
+              onChangeText={handleHourChange}
+              value={hour}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="0-59"
+              onChangeText={handleMinuteChange}
+              value={minute}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+      );
+    }
+    return null; // Render nothing if end time is not selected
+  };
+  
   
   return (
     <View style={styles.container}>
         
 
-      <Text style={styles.title}>WEEKLY</Text>
-      <Text style={styles.text}>Repeat every at interval of every {selectedWeekDuration || "_"} week</Text>
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
+
+  <Text style={styles.title}>WEEKLY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>      
+<Text style={styles.text}>Repeat every at interval of every {selectedWeekDuration || "_"} week</Text>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
       <View style={styles.rowContainer}>
@@ -344,9 +431,9 @@ export default function WeeklyReminder() {
         
       </View>
     
-  
+  {renderHourMinuteInputs()}
 
-<View style={styles.rowContainer}>
+{/* <View style={styles.rowContainer}>
 <Text style={{ color: 'black',marginTop:"5%" }}>EVERY</Text>
 
 <Text style={{ color: 'black',marginTop:"5%"  }}>HOUR</Text>
@@ -371,38 +458,63 @@ export default function WeeklyReminder() {
         keyboardType="numeric"
       />
    
-    </View>
+    </View> */}
 <TouchableOpacity style={styles.customButtonDone} onPress={setReminder}>
   <Text style={{...styles.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
-
+<Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => {
+          toggleModal();
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Intervals:</Text>
+            {intervals.map((interval, index) => (
+              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      
 
       <DateTimePickerModal
-        isVisible={isStartDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, true)}
-        onCancel={hideStartDatePicker}
-      />
+  isVisible={isStartDatePickerVisible}
+  mode="date"
+  onConfirm={(date) => handleDateConfirm(date, true)}
+  onCancel={hideStartDatePicker}
+  date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+/>
 
-      <DateTimePickerModal
-        isVisible={isEndDatePickerVisible}
-        mode="date"
-        onConfirm={(date) => handleDateConfirm(date, false)}
-        onCancel={hideEndDatePicker}
-      />
-          <DateTimePickerModal
-        isVisible={isStartTimePickerVisible}
-        mode="time"
-        onConfirm={handleStartTimeConfirm}
-        onCancel={hideStartTimePicker}
-      />
+<DateTimePickerModal
+  isVisible={isEndDatePickerVisible}
+  mode="date"
+  onConfirm={(date) => handleDateConfirm(date, false)}
+  onCancel={hideEndDatePicker}
+  date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+/>
 
-      <DateTimePickerModal
-        isVisible={isEndTimePickerVisible}
-        mode="time"
-        onConfirm={handleEndTimeConfirm}
-        onCancel={hideEndTimePicker}
-      />
+<DateTimePickerModal
+  isVisible={isStartTimePickerVisible}
+  mode="time"
+  onConfirm={handleStartTimeConfirm}
+  onCancel={hideStartTimePicker}
+  date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
+/>
+
+<DateTimePickerModal
+  isVisible={isEndTimePickerVisible}
+  mode="time"
+  onConfirm={handleEndTimeConfirm}
+  onCancel={hideEndTimePicker}
+  date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
+/>
 
     </View>
   );
@@ -449,7 +561,15 @@ color:"red",
     
 
   },
- 
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
+  },
+
  
   monthText: {
     textAlign: 'center',
@@ -543,6 +663,24 @@ color:"red",
   selectedMonthOption: {
     backgroundColor: 'blue',
   },
-  
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+
+  closeButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
 });
 
