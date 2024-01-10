@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import ModalDropdown from 'react-native-modal-dropdown';
 
 
-export default function DailyReminder() {
+export default function DailyReminder({ navigation }) {
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
@@ -48,25 +48,54 @@ export default function DailyReminder() {
 
  ];
  
-  const handleDateConfirm = (date, isStartDate) => {
-    const currentDate = new Date(); // Get the current date and time
-  
-    // Check if the selected date is in the past
-    if (date < currentDate) {
-      date = currentDate; // Set the selected date to the current date
+ const reopenStartDatePicker = () => {
+  setStartDatePickerVisible(true);
+};
+
+const reopenEndDatePicker = () => {
+  setEndDatePickerVisible(true);
+};
+const navigateToMainScreen = () => {
+  navigation.navigate("Home");
+};
+
+const handleDateConfirm = (date, isStartDate) => {
+  const currentDate = new Date(); // Get the current date and time
+
+  if (date < currentDate) {
+    date = currentDate; // Set the selected date to the current date
+  }
+
+  if (isStartDate) {
+    setSelectedStartDate(date);
+    setChosenStartDate(date.toDateString()); // Convert to a string representation
+  } else {
+    if (date < selectedStartDate) {
+      Alert.alert(
+        'Error',
+        'End date should be greater than or equal to the start date',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );
+      hideEndDatePicker(); // Hide the incorrect end date picker
+      return; // Don't update the end date if it's before the start date
     }
-  
-    if (isStartDate) {
-      setSelectedStartDate(date);
-      setChosenStartDate(date.toDateString()); // Convert to a string representation
-    } else {
-      setSelectedEndDate(date);
-      setChosenEndDate(date.toDateString()); // Convert to a string representation
-    }
-  
-    hideStartDatePicker();
-    hideEndDatePicker();
-  };
+
+    setSelectedEndDate(date);
+    setChosenEndDate(date.toDateString()); // Convert to a string representation
+  }
+  hideStartDatePicker();
+  hideEndDatePicker();
+};
+
+
   
  
   const handleStartTimeConfirm = (time) => {
@@ -169,12 +198,16 @@ export default function DailyReminder() {
         endTime = selectedEndTime;
       }
   
-      if (endDate < selectedStartDate) {
-        console.warn('End date should be equal to or greater than the start date');
+      if (endDate <= selectedStartDate) {
+        console.warn('End date should be greater than the start date');
+        // Display an alert to the user
+        Alert.alert(
+          'Error',
+          'End date should be greater than the start date',
+          [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+        );
         return;
       }
-  
-  
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
         selectedStartDate.getMonth(),
@@ -219,11 +252,24 @@ export default function DailyReminder() {
   
       setIntervals(calculatedIntervals);
       toggleModal();
-  
     } else {
-      console.warn('Incomplete data for calculation');
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );
     }
   };
+  
+  
   const renderHourMinuteInputs = () => {
     if (isEndTimeSelected) {
       return (
@@ -260,7 +306,18 @@ export default function DailyReminder() {
     <View style={styles.container}>
         
 
-      <Text style={styles.title}>DAILY</Text>
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
+
+  <Text style={styles.title}>DAILY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>
       <Text style={styles.text}>Repeat every at interval of every {selectedDailyDuration || "_"} day</Text>
 
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
@@ -311,36 +368,7 @@ export default function DailyReminder() {
         </View>
         
       </View>
-    
-{/*   
-
-<View style={styles.rowContainer}>
-<Text style={{ color: 'black',marginTop:"5%" }}>EVERY</Text>
-
-<Text style={{ color: 'black',marginTop:"5%"  }}>HOUR</Text>
-
-<Text style={{ color: 'black',marginTop:"5%"  }}>MINUTE</Text>
-
-
-</View>
-<View style={{...styles.rowContainer}}>
-      <TextInput
-        style={{...styles.input,marginLeft:"32%"}}
-        placeholder="1-23"
-        onChangeText={handleHourChange}
-        value={hour}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="1-59"
-        onChangeText={handleMinuteChange}
-        value={minute}
-        keyboardType="numeric"
-      />
-   
-
-    </View> */}
+ 
           {renderHourMinuteInputs()}
 
 <TouchableOpacity style={styles.customButtonDone} onPress={setReminder}>
@@ -407,6 +435,14 @@ const styles = StyleSheet.create({
   container: {
     padding: 14,
     margin: 8,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
   },
  
   title: {

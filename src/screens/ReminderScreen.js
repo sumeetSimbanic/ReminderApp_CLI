@@ -1,15 +1,22 @@
 import React, { useState,useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableHighlight, ScrollView, FlatList } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableHighlight, ScrollView, FlatList,Button } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import TimePickerModal from 'react-native-modal-datetime-picker';
 import PushNotification from 'react-native-push-notification';
-import { PermissionsAndroid } from 'react-native';
+import SQLite from 'react-native-sqlite-storage';
+import { useNavigation } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 
 
 
-export default function ReminderScreen({navigation}) {
+const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
+
+
+export default function ReminderScreen({navigation,route}) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [inputText, setInputText] = useState('');
+  const isEditingMode = route.params && route.params.reminderId;
+
   const [noteText, setNoteText] = useState('');
   const [showDateButtons, setShowDateButtons] = useState(false);
   const [selectedRepeatOption, setSelectedRepeatOption] = useState(null);
@@ -25,10 +32,60 @@ export default function ReminderScreen({navigation}) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isEditing, setIsEditing] = useState(false); // Add this line
   const [editingIndex, setEditingIndex] = useState(null); 
+  const isFocused = useIsFocused();
+
+
+  useEffect(() => {
+    initDB();
+    fetchRemindersFromDB();
+  }, []);
+
+  const initDB = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, note TEXT, date INTEGER)',
+        [],
+        (tx, result) => {
+          console.log('Table created successfully');
+        },
+        (error) => {
+          console.log('Error creating table:', error);
+        }
+      );
+    });
+  };
+
+  
+  const fetchRemindersFromDB = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM reminders',
+        [],
+        (tx, result) => {
+          const data = [];
+          for (let i = 0; i < result.rows.length; i++) {
+            const item = result.rows.item(i);
+            data.push({ id: item.id, title: item.title, note: item.note, date: new Date(item.date) });
+          }
+          setReminders(data);
+
+          // navigation.navigate('OnceListing', { reminders: data });
+
+          // Logging all reminders to the console
+          console.log('All reminders in the database:', data);
+        },
+        (error) => {
+          console.log('Error fetching reminders:', error);
+        }
+      );
+    });
+  };
+
 
 useEffect(()=>{
   createChannels();
 },[]);
+
 const createChannels = () =>{
   PushNotification.createChannel(
     {
@@ -36,8 +93,71 @@ const createChannels = () =>{
       channelName:"Test Channel"
     }
   )
+
 }
 
+useEffect(() => {
+  if (isFocused) {
+    if (route.params && route.params.reminderId) {
+      // Editing an existing reminder
+      const reminderId = route.params.reminderId;
+      const reminderIndex = reminders.findIndex((reminder) => reminder.id === reminderId);
+      const reminderToEdit = reminders.find((reminder) => reminder.id === reminderId);
+
+      if (reminderToEdit) {
+        setInputText(reminderToEdit.title);
+        setNoteText(reminderToEdit.note);
+        setSelectedDate(reminderToEdit.date);
+        setSelectedTime(reminderToEdit.date);
+        setIsEditing(true);
+        setEditingIndex(reminderIndex);
+      }
+    } else {
+      // Reset the state when the screen gains focus but not for editing
+      setInputText('');
+      setNoteText('');
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setIsEditing(false);
+      setEditingIndex(null);
+      // Reset other state variables as needed
+    }
+  }
+}, [isFocused, route.params, reminders]);
+
+useEffect(() => {
+  // Check if a reminder ID was passed through navigation
+  if (route.params && route.params.reminderId) {
+    const reminderId = route.params.reminderId;
+    console.log('Reminder ID:', reminderId);
+    console.log('Reminders:', reminders);
+    const reminderIndex = reminders.findIndex((reminder) => reminder.id === reminderId);
+
+    const reminderToEdit = reminders.find((reminder) => reminder.id === reminderId);
+    console.log('Reminder to Edit:', reminderToEdit);
+
+    if (reminderToEdit) {
+      console.log(reminderIndex,"kkk")
+      // Set the fields for editing based on the retrieved reminder
+      setInputText(reminderToEdit.title);
+      setNoteText(reminderToEdit.note);
+      setSelectedDate(reminderToEdit.date);
+      setSelectedTime(reminderToEdit.date); // You might need to adjust this based on your data structure
+      setIsEditing(true);
+      setEditingIndex(reminderIndex)
+      // Other necessary actions for editing...
+    }
+  }
+}, [route.params, reminders]);
+const editReminder = (index) => {
+  const reminderToEdit = reminders[index];
+  setInputText(reminderToEdit.title);
+  setNoteText(reminderToEdit.note);
+  setSelectedDate(reminderToEdit.date);
+  setSelectedTime(reminderToEdit.date);
+  setIsEditing(true);
+  setEditingIndex(index);
+};
   
   const setUpcomingDate = () => {
     setDatePickerVisible(true);
@@ -59,11 +179,7 @@ const createChannels = () =>{
     setShowDateButtons(!showDateButtons);
     setSelectedRepeatOption(null);
   };
-  const deleteReminder = (index) => {
-    const updatedReminders = [...reminders];
-    updatedReminders.splice(index, 1);
-    setReminders(updatedReminders);
-  };
+
   
   const clearTimeCategorySelection = () => {
     setSelectedDate(null);
@@ -79,7 +195,6 @@ const createChannels = () =>{
     setDatePickerVisible(false);
   };
 
-
   const addReminder = () => {
     if (!inputText) {
       setErrorMessage('Please enter a title for the reminder.');
@@ -92,41 +207,62 @@ const createChannels = () =>{
         dateTime.setHours(selectedTime.getHours());
         dateTime.setMinutes(selectedTime.getMinutes());
   
-        const newReminder = {
-          date: dateTime,
-          note: noteText,
-          title: inputText,
-        };
-  
         if (isEditing) {
           // Editing an existing reminder
-          const updatedReminders = [...reminders];
-          updatedReminders[editingIndex] = newReminder; // Replace the reminder at the specified index
-          setReminders(updatedReminders);
+          console.log(editingIndex)
+          console.log(reminders[editingIndex])
+          const updatedReminder = {
+            id: reminders[editingIndex].id,
+            date: dateTime,
+            note: noteText,
+            title: inputText,
+          };
+  
+          db.transaction((tx) => {
+            tx.executeSql(
+              'UPDATE reminders SET title = ?, note = ?, date = ? WHERE id = ?',
+              [updatedReminder.title, updatedReminder.note, updatedReminder.date.getTime(), updatedReminder.id],
+              (tx, result) => {
+                console.log('Reminder updated successfully');
+                fetchRemindersFromDB(); // Fetch updated reminders
+              },
+              (error) => {
+                console.log('Error updating reminder:', error);
+              }
+            );
+          });
+  
           setIsEditing(false); // Reset the editing flag
         } else {
           // Adding a new reminder
-          PushNotification.localNotificationSchedule({
-            channelId: 'test-channel',
-            title: newReminder.title,
-            message: newReminder.note,
-            date: newReminder.date,
+          db.transaction((tx) => {
+            tx.executeSql(
+              'INSERT INTO reminders (title, note, date) VALUES (?, ?, ?)',
+              [inputText, noteText, dateTime.getTime()],
+              (tx, result) => {
+                console.log('Reminder added successfully');
+                PushNotification.localNotificationSchedule({
+                  channelId: 'test-channel',
+                  title: inputText,
+                  message: noteText,
+                  date: dateTime,
+                });
+
+                // fetchRemindersFromDB(); // Fetch updated reminders
+              },
+              (error) => {
+                console.log('Error adding reminder:', error);
+              }
+            );
           });
-  
-          setReminders([...reminders, newReminder]);
         }
-  
+        navigation.navigate('OnceListing');
+
         // Reset all fields to their initial state
         setNoteText('');
         setInputText('');
         setSelectedDate(null);
         setSelectedTime(null);
-        setShowNoteInput(false);
-        setShowDateButtons(false);
-        setTimePickerVisible(false);
-        setDatePickerVisible(false);
-        setIsTimeCategorySelected(false);
-        setErrorMessage('');
       } else {
         alert('Please select a time for the reminder.');
       }
@@ -134,8 +270,6 @@ const createChannels = () =>{
       alert('Please select a date for the reminder.');
     }
   };
-  
-
   
   
   const hideTimePicker = () => {
@@ -147,13 +281,11 @@ const createChannels = () =>{
   const setTodayTime = () => {
     const today = new Date();
   
-    // Clearing seconds and milliseconds for precise comparison
     today.setSeconds(0);
     today.setMilliseconds(0);
   
     const now = new Date();
     if (selectedDate && selectedDate.toDateString() === now.toDateString() && selectedDate < now) {
-      // Allow reopening without the alert
       setSelectedTime(null);
       setShowDateButtons(false);
       setSelectedDate(today);
@@ -161,7 +293,6 @@ const createChannels = () =>{
       return;
     }
   
-    // If no warning is needed, proceed as usual
     setSelectedTime(null);
     setSelectedDate(today);
     setShowDateButtons(false);
@@ -190,22 +321,11 @@ const createChannels = () =>{
       alert('Please select a time in the future.');
       return;
     }
-  
-    // Reset the selected time to null to allow reopening after warning
-    setSelectedTime(time);
+      setSelectedTime(time);
     hideTimePicker();
     setIsTimeCategorySelected(true);
   };
-  const editReminder = (index) => {
-    const reminderToEdit = reminders[index];
-    setInputText(reminderToEdit.title);
-    setNoteText(reminderToEdit.note);
-    setSelectedDate(reminderToEdit.date);
-    setSelectedTime(reminderToEdit.date);
-    setIsEditing(true); // Set the editing flag
-    setEditingIndex(index); // Set the index of the reminder being edited
-    // Additional logic as needed to open pickers etc.
-  };
+ 
   
   
   const openFrequencyButtons = (option) => {
@@ -216,8 +336,7 @@ const createChannels = () =>{
       setIsTimeCategorySelected(true);
     }
   };
-  
-  
+   
   const chosenTimeCategory = () => {
     if (selectedDate && selectedTime) {
       return (
@@ -231,9 +350,13 @@ const createChannels = () =>{
     return null;
   };
   
-  
+  const navigateToList = () => {
+    navigation.navigate('OnceListing');
+  };
   return (
     <View>
+              <TouchableHighlight style={styles.title} onPress={navigateToList}><Text>List</Text></TouchableHighlight>
+
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>ReminderScreen</Text>
         <TextInput
@@ -243,7 +366,7 @@ const createChannels = () =>{
           onChangeText={(text) => {
             const words = text.split(' ').slice(0, 15);
             setInputText(words.join(' '));
-            setErrorMessage(''); // Clear the error message when the user types
+            setErrorMessage(''); 
           }}
         />
         
@@ -258,7 +381,6 @@ const createChannels = () =>{
           value={noteText}
           multiline={true}
   onChangeText={(text) => {
-    // Limit the note to 50 words
     const words = text.split(' ').slice(0, 50);
     setNoteText(words.join(' '));
   }}
@@ -307,13 +429,15 @@ const createChannels = () =>{
         {chosenTimeCategory()}
         
         
-        <TouchableHighlight>
-          <View style={styles.centered}>
-            <CustomButton title="Add Reminder" onPress={addReminder} />
-          </View>
-        </TouchableHighlight>
+        <TouchableHighlight onPress={addReminder}>
+        <View style={styles.centered}>
+          <CustomButton title={isEditingMode ? 'Edit Reminder' : 'Set Reminder'} onPress={addReminder} />
+        </View>
+      </TouchableHighlight>
       </ScrollView>
-      <FlatList
+      {/* <Button title="View All Reminders" onPress={fetchRemindersFromDB} /> */}
+
+      {/* <FlatList
   data={reminders}
   keyExtractor={(item, index) => index.toString()}
   renderItem={({ item, index }) => (
@@ -335,7 +459,7 @@ const createChannels = () =>{
     </View>
   )}
 />
-
+ */}
 
 
 <TimePickerModal
@@ -346,7 +470,7 @@ const createChannels = () =>{
     hideTimePicker();
     setSettingUpcomingTime(false);
   }}
-  date={new Date()}
+  date={selectedTime || new Date()} 
   />
 
 <DateTimePickerModal
@@ -355,6 +479,8 @@ const createChannels = () =>{
   onConfirm={handleDateConfirm}
   onCancel={hideDatePicker}
   defaultDate={new Date()} 
+  date={selectedDate|| new Date()} 
+
 />
 
     </View>

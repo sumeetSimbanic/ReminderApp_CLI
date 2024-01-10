@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
+import React, { startTransition, useState } from 'react';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -99,7 +99,9 @@ export default function MonthlyReminder({navigation}) {
     hideEndDatePicker();
   };
   
-  
+  const navigateToMainScreen = () => {
+    navigation.navigate("Home");
+  };
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
     setChosenStartTime(time.toLocaleTimeString()); // Convert to a string representation
@@ -348,17 +350,21 @@ export default function MonthlyReminder({navigation}) {
       console.log("fliterdata",filteredData)
       toggleModal();
 
-      
-      // navigation.navigate('Details', {
-      //   startDateTime: startDateTime,
-      //   endDateTime: endDateTime,
-      //   selectedStartTime: selectedStartTime,
-      //   selectedEndTime: selectedEndTime,
-      //   hour: hour,
-      //   minute: minute,
-      //   selectedDuration: selectedDuration,
-      //   selectedWeeks: selectedWeeks,
-    // });
+      const startTimestamp = startDateTime.getTime();
+const endTimestamp = endDateTime.getTime();
+
+      navigation.navigate('Details', {
+        startDateTime: startTimestamp,
+        endDateTime: endTimestamp,
+        selectedStartTime: selectedStartTime,
+        selectedEndTime: selectedEndTime,
+        hour: hour,
+        minute: minute,
+        selectedDuration: selectedDuration,
+        selectedWeeks: selectedWeeks,
+        intervals:intervals,
+    });
+    console.log("---",startDateTime)
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -429,29 +435,51 @@ export default function MonthlyReminder({navigation}) {
       setIntervals(filteredIntervals);
       toggleModal();
 
-      // navigation.navigate('Details', {
-      //   startDateTime: startDateTime,
-      //   endDateTime: endDateTime,
-      //   selectedStartTime: selectedStartTime,
-      //   selectedEndTime: selectedEndTime,
-      //   hour: hour,
-      //   minute: minute,
-      //   selectedDuration: selectedDuration,
-      //   selectedWeeks: selectedWeeks,
-      //   selectedDates: selectedDates,
-      // });
+      navigation.navigate('Details', {
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
+        selectedStartTime: selectedStartTime,
+        selectedEndTime: selectedEndTime,
+        hour: hour,
+        minute: minute,
+        selectedDuration: selectedDuration,
+        selectedWeeks: selectedWeeks,
+        selectedDates: selectedDates,
+        intervals:intervals,
+      });
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
   
   
   return (
     <View style={styles.container}>
-        
 
-      <Text style={styles.title}>MONTHLY</Text>
-      <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
+
+  <Text style={styles.title}>MONTHLY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>      
+    <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
      
@@ -634,14 +662,14 @@ export default function MonthlyReminder({navigation}) {
 <View style={{...styles.rowContainer}}>
       <TextInput
         style={{...styles.input,marginLeft:"32%"}}
-        placeholder="1-23"
+        placeholder="0-23"
         onChangeText={handleHourChange}
         value={hour}
         keyboardType="numeric"
       />
       <TextInput
         style={styles.input}
-        placeholder="1-59"
+        placeholder="0-59"
         onChangeText={handleMinuteChange}
         value={minute}
         keyboardType="numeric"
@@ -655,8 +683,19 @@ export default function MonthlyReminder({navigation}) {
   } else if (selectedOption === 'day') {
     setReminderTwo();
   } else {
-    console.warn('Please select an option before setting a reminder');
-  }
+Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );  }
 }}>
   <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
   <Modal
@@ -671,6 +710,7 @@ export default function MonthlyReminder({navigation}) {
           <ScrollView style={styles.modalContent}>
             <Text style={styles.modalTitle}>Intervals:</Text>
             {intervals.map((interval, index) => (
+
               <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
             ))}
           </ScrollView>
@@ -743,7 +783,14 @@ color:"red",
     marginTop: "3%",
 
   },
- 
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
+  },
   pickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput} from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import moment from 'moment';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 
 
-export default function HourlyReminder() {
+export default function HourlyReminder({ navigation }) {
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
-  
-
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
-
   const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisibility] = useState(false);
   const [selectedStartTime, setSelectedStartTime] = useState(new Date());
@@ -25,11 +22,8 @@ export default function HourlyReminder() {
   const [chosenEndDate, setChosenEndDate] = useState(null);
   const [chosenStartTime, setChosenStartTime] = useState(null);
   const [chosenEndTime, setChosenEndTime] = useState(null);
-  
   const [hourError, setHourError] = useState('');
   const [minuteError, setMinuteError] = useState('');
-
- 
   const [isModalVisible, setModalVisible] = useState(false);
   const [intervals, setIntervals] = useState([]);
 
@@ -37,27 +31,51 @@ export default function HourlyReminder() {
     setModalVisible(!isModalVisible);
   };
 
- 
-  const handleDateConfirm = (date, isStartDate) => {
-    const currentDate = new Date(); // Get the current date and time
-  
-    // Check if the selected date is in the past
-    if (date < currentDate) {
-      date = currentDate; // Set the selected date to the current date
-    }
-  
-    if (isStartDate) {
-      setSelectedStartDate(date);
-      setChosenStartDate(date.toDateString()); // Convert to a string representation
-    } else {
-      setSelectedEndDate(date);
-      setChosenEndDate(date.toDateString()); // Convert to a string representation
-    }
-  
-    hideStartDatePicker();
-    hideEndDatePicker();
+  const navigateToMainScreen = () => {
+    navigation.navigate("Home");
   };
-  
+ 
+const reopenEndDatePicker = () => {
+  setEndDatePickerVisible(true);
+};
+
+const handleDateConfirm = (date, isStartDate) => {
+  const currentDate = new Date(); // Get the current date and time
+
+  if (date < currentDate) {
+    date = currentDate; // Set the selected date to the current date
+  }
+
+  if (isStartDate) {
+    setSelectedStartDate(date);
+    setChosenStartDate(date.toDateString()); // Convert to a string representation
+  } else {
+    if (date < selectedStartDate) {
+      Alert.alert(
+        'Error',
+        'End date should be greater than or equal to the start date',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );
+      hideEndDatePicker(); // Hide the incorrect end date picker
+      return; // Don't update the end date if it's before the start date
+    }
+
+    setSelectedEndDate(date);
+    setChosenEndDate(date.toDateString()); // Convert to a string representation
+  }
+  hideStartDatePicker();
+  hideEndDatePicker();
+};
+
+
   
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
@@ -185,8 +203,19 @@ export default function HourlyReminder() {
       setIntervals(calculatedIntervals);
       toggleModal();
     } else {
-      console.warn('Incomplete data for calculation');
-    }
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );    }
   };
   const showStartDatePicker = () => {
     setStartDatePickerVisible(true);
@@ -239,8 +268,18 @@ export default function HourlyReminder() {
   return (
     <View style={styles.container}>
         
+        <View style={styles.headerContainer}>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      {/* <Icon name="arrow-back" size={30} color="black" /> */}
+      <Text>Back</Text>
+  </TouchableHighlight>
 
-      <Text style={styles.title}>HOURLY</Text>
+  <Text style={styles.title}>HOURLY</Text>
+  <TouchableHighlight onPress={navigateToMainScreen}>
+      <Text>Cancel</Text>
+      </TouchableHighlight>
+
+</View>
       <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
      
@@ -405,8 +444,21 @@ color:"red",
     
 
   },
+  headerContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    justifyContent: 'space-between',
+    
+   
+    // Add more styles as needed
+  },
  
- 
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 10,
+    zIndex: 1, // Ensure it's above other components
+  },
   monthText: {
     textAlign: 'center',
     color: 'black',
