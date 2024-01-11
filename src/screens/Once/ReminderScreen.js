@@ -8,9 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useIsFocused } from '@react-navigation/native';
 import ReminderScreenStyle from './ReminderScreenStyle'; 
 
-
-
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
+
 
 
 export default function ReminderScreen({navigation,route}) {

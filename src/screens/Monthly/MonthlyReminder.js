@@ -1,11 +1,14 @@
-import React, { startTransition, useState } from 'react';
-import { View, Text, Styleheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
+import React, { useState,useEffect } from 'react';
+import { View, Text, StylSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Calendar} from 'react-native-calendars';
 import MonthlyReminderStyle from './MonthlyReminderStyle';
+import SQLite from 'react-native-sqlite-storage';
 
+
+const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 
 export default function MonthlyReminder({navigation}) {
@@ -98,6 +101,23 @@ export default function MonthlyReminder({navigation}) {
     hideStartDatePicker();
     hideEndDatePicker();
   };
+  const createRepeatReminderTable = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT);',
+        [],
+        (tx, result) => {
+          console.log('repeatreminder table created successfully');
+        },
+        (error) => {
+          console.error('Error creating repeatreminder table:', error);
+        }
+      );
+    });
+  };
+  
+  // Call this function when your application starts or when you initialize the database
+  createRepeatReminderTable();
   
   const navigateToMainScreen = () => {
     navigation.navigate("Home");
@@ -183,7 +203,28 @@ export default function MonthlyReminder({navigation}) {
 
   // Function to handle the selected end time
  
-
+  const logRepeatReminderData = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM repeatreminder;',
+        [],
+        (tx, result) => {
+          const rows = result.rows;
+  
+          for (let i = 0; i < rows.length; i++) {
+            const item = rows.item(i);
+            console.log(`Entry ${i + 1}:`, item);
+          }
+        },
+        (error) => {
+          console.error('Error fetching data from repeatreminder table:', error);
+        }
+      );
+    });
+  };
+  
+  // Call this function when you want to log the data
+  
   const handleWeekSelection = (week) => {
     setSelectedWeek(week);
   };
@@ -345,10 +386,23 @@ export default function MonthlyReminder({navigation}) {
       // console.log('Intervals:', intervals);
       // console.log('Filtered Intervals:', filteredIntervals);
       const filteredIntervals = filterIntervalsByDuration(filteredData, selectedDuration);
-
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute, selectedDates, selectedDuration, selectedWeeks, filteredIntervals) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [startDateTime.toString(), endDateTime.toString(), selectedStartTime.toLocaleTimeString(), selectedEndTime.toLocaleTimeString(), hour, minute, JSON.stringify(selectedDates), selectedDuration, JSON.stringify(selectedWeeks), JSON.stringify(filteredIntervals)],
+          (tx, result) => {
+            console.log('Reminder Two inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
       setIntervals(filteredIntervals);
       console.log("real",filteredData)
       toggleModal();
+      logRepeatReminderData();
+      createRepeatReminderTable();
 
       const startTimestamp = startDateTime.getTime();
 const endTimestamp = endDateTime.getTime();
@@ -428,13 +482,25 @@ const endTimestamp = endDateTime.getTime();
         currentDateTime.setDate(currentDateTime.getDate() + 1); // Move to the next day
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-
-      // console.log('Intervals:', intervals);
+  
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
-
-      console.log('real2:', filteredIntervals);
+  
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute, selectedDates, selectedDuration, selectedWeeks, filteredIntervals) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [startDateTime.toString(), endDateTime.toString(), selectedStartTime.toLocaleTimeString(), selectedEndTime.toLocaleTimeString(), hour, minute, JSON.stringify(selectedDates), selectedDuration, JSON.stringify(selectedWeeks), JSON.stringify(filteredIntervals)],
+          (tx, result) => {
+            console.log('Reminder inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
       setIntervals(filteredIntervals);
       toggleModal();
+      logRepeatReminderData();
+      createRepeatReminderTable();
 
       navigation.navigate('Details', {
         startDateTime: startDateTime,
@@ -446,7 +512,7 @@ const endTimestamp = endDateTime.getTime();
         selectedDuration: selectedDuration,
         selectedWeeks: selectedWeeks,
         selectedDates: selectedDates,
-        filteredIntervals:filteredIntervals,
+        filteredIntervals: filteredIntervals,
       });
     } else {
       Alert.alert(
@@ -461,7 +527,8 @@ const endTimestamp = endDateTime.getTime();
             },
           },
         ]
-      );    }
+      );
+    }
   };
   
   
