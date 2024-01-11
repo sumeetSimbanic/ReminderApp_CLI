@@ -1,11 +1,12 @@
 import React, { useState,useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableHighlight, ScrollView, FlatList,Button } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableHighlight, ScrollView, FlatList,Button} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import TimePickerModal from 'react-native-modal-datetime-picker';
 import PushNotification from 'react-native-push-notification';
 import SQLite from 'react-native-sqlite-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useIsFocused } from '@react-navigation/native';
+import ReminderScreenStyle from './ReminderScreenStyle'; 
 
 
 
@@ -69,9 +70,7 @@ export default function ReminderScreen({navigation,route}) {
           }
           setReminders(data);
 
-          // navigation.navigate('OnceListing', { reminders: data });
-
-          // Logging all reminders to the console
+          
           console.log('All reminders in the database:', data);
         },
         (error) => {
@@ -113,20 +112,17 @@ useEffect(() => {
         setEditingIndex(reminderIndex);
       }
     } else {
-      // Reset the state when the screen gains focus but not for editing
       setInputText('');
       setNoteText('');
       setSelectedDate(null);
       setSelectedTime(null);
       setIsEditing(false);
       setEditingIndex(null);
-      // Reset other state variables as needed
     }
   }
 }, [isFocused, route.params, reminders]);
 
 useEffect(() => {
-  // Check if a reminder ID was passed through navigation
   if (route.params && route.params.reminderId) {
     const reminderId = route.params.reminderId;
     console.log('Reminder ID:', reminderId);
@@ -138,14 +134,12 @@ useEffect(() => {
 
     if (reminderToEdit) {
       console.log(reminderIndex,"kkk")
-      // Set the fields for editing based on the retrieved reminder
       setInputText(reminderToEdit.title);
       setNoteText(reminderToEdit.note);
       setSelectedDate(reminderToEdit.date);
-      setSelectedTime(reminderToEdit.date); // You might need to adjust this based on your data structure
+      setSelectedTime(reminderToEdit.date); 
       setIsEditing(true);
       setEditingIndex(reminderIndex)
-      // Other necessary actions for editing...
     }
   }
 }, [route.params, reminders]);
@@ -185,7 +179,7 @@ const editReminder = (index) => {
     setSelectedDate(null);
     setSelectedTime(null);
     setShowDateButtons(false);
-    setTimePickerVisible(false); // Add this line to hide the time picker
+    setTimePickerVisible(false); 
     setDatePickerVisible(false); 
     setIsTimeCategorySelected(false);
   };
@@ -208,7 +202,6 @@ const editReminder = (index) => {
         dateTime.setMinutes(selectedTime.getMinutes());
   
         if (isEditing) {
-          // Editing an existing reminder
           console.log(editingIndex)
           console.log(reminders[editingIndex])
           const updatedReminder = {
@@ -235,10 +228,16 @@ const editReminder = (index) => {
           setIsEditing(false); // Reset the editing flag
         } else {
           // Adding a new reminder
+          console.log("input",inputText)
+          console.log("note",noteText)
+          console.log("date",dateTime)
+
+
           db.transaction((tx) => {
             tx.executeSql(
               'INSERT INTO reminders (title, note, date) VALUES (?, ?, ?)',
               [inputText, noteText, dateTime.getTime()],
+              
               (tx, result) => {
                 console.log('Reminder added successfully');
                 PushNotification.localNotificationSchedule({
@@ -340,7 +339,7 @@ const editReminder = (index) => {
   const chosenTimeCategory = () => {
     if (selectedDate && selectedTime) {
       return (
-        <View style={styles.chosenTimeCategoryContainer}>
+        <View style={ReminderScreenStyle.chosenTimeCategoryContainer}>
           <Text>Chosen Date: {selectedDate.toDateString()}</Text>
           <Text>Chosen Time: {selectedTime.toLocaleTimeString()}</Text>
          
@@ -355,12 +354,12 @@ const editReminder = (index) => {
   };
   return (
     <View>
-              <TouchableHighlight style={styles.title} onPress={navigateToList}><Text>List</Text></TouchableHighlight>
+              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text>List</Text></TouchableHighlight>
 
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.heading}>ReminderScreen</Text>
+      <ScrollView contentContainerStyle={ReminderScreenStyle.container}>
+        <Text style={ReminderScreenStyle.heading}>ReminderScreen</Text>
         <TextInput
-          style={styles.inputField}
+          style={ReminderScreenStyle.inputField}
           value={inputText}
           placeholder="ADD REMINDER HERE...."
           onChangeText={(text) => {
@@ -374,9 +373,9 @@ const editReminder = (index) => {
           <Text  style={{color:"red"}}>{errorMessage}</Text>
         ) : null}
         {showNoteInput && (
-          <View style={styles.noteInputContainer}>
+          <View style={ReminderScreenStyle.noteInputContainer}>
            <TextInput
-          style={styles.noteInput}
+          style={ReminderScreenStyle.noteInput}
           placeholder="Add a note..."
           value={noteText}
           multiline={true}
@@ -387,14 +386,14 @@ const editReminder = (index) => {
 />
           </View>
         )}
-        <View style={styles.buttonContainer}>
+        <View style={ReminderScreenStyle.buttonContainer}>
           <CustomButton title="Note" onPress={openNoteInput} />
           <CustomButton title="Camera" />
           <CustomButton title="Notification" />
         </View>
         {showDateButtons ? (
           <>
-            <View style={styles.buttonContainerOne}>
+            <View style={ReminderScreenStyle.buttonContainerOne}>
               <CustomButton title="Today" onPress={setTodayTime} />
               <CustomButton title="Tomorrow" onPress={setTomorrowTime} />
               <CustomButton title="Upcoming" onPress={setUpcomingDate} />
@@ -402,7 +401,7 @@ const editReminder = (index) => {
             </View>
           </>
         ) : (
-          <View style={styles.buttonCategoryContainer}>
+          <View style={ReminderScreenStyle.buttonCategoryContainer}>
             {!selectedRepeatOption && (
               <>
                 <CustomButton title="Once" onPress={openDateButtons} />
@@ -412,7 +411,7 @@ const editReminder = (index) => {
               </>
             )}
             {selectedRepeatOption && (
-              <View style={styles.buttonContainerTwo}>
+              <View style={ReminderScreenStyle.buttonContainerTwo}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <CustomButton title="Hourly" onPress={() => openFrequencyButtons('Hourly')} />
                   <CustomButton title="Daily" onPress={() => openFrequencyButtons('Daily')} />
@@ -430,36 +429,12 @@ const editReminder = (index) => {
         
         
         <TouchableHighlight onPress={addReminder}>
-        <View style={styles.centered}>
+        <View style={ReminderScreenStyle.centered}>
           <CustomButton title={isEditingMode ? 'Edit Reminder' : 'Set Reminder'} onPress={addReminder} />
         </View>
       </TouchableHighlight>
       </ScrollView>
-      {/* <Button title="View All Reminders" onPress={fetchRemindersFromDB} /> */}
-
-      {/* <FlatList
-  data={reminders}
-  keyExtractor={(item, index) => index.toString()}
-  renderItem={({ item, index }) => (
-    <View style={styles.reminderItem}>
-      <Text style={styles.reminderTitle}>Title: {item.title}</Text>
-      <Text style={styles.reminderDate}>Date: {item.date.toDateString()}</Text>
-      <Text style={styles.reminderTime}>Time: {item.date.toLocaleTimeString()}</Text>
-      <Text style={styles.reminderNote}>Note: {item.note}</Text>
-      <TouchableHighlight onPress={() => deleteReminder(index)}>
-        <View style={styles.deleteButtonContainer}>
-          <Text style={styles.deleteButtonText}>Delete</Text>
-        </View>
-      </TouchableHighlight>
-      <TouchableHighlight onPress={() => editReminder(index)}>
-  <View style={styles.deleteButtonContainer}>
-    <Text style={styles.deleteButtonText}>Edit</Text>
-  </View>
-</TouchableHighlight>
-    </View>
-  )}
-/>
- */}
+    
 
 
 <TimePickerModal
@@ -488,127 +463,9 @@ const editReminder = (index) => {
 }
 const CustomButton = ({ title, onPress }) => {
   return (
-    <TouchableHighlight style={styles.customButton} onPress={onPress}>
-      <Text style={styles.customButtonText}>{title}</Text>
+    <TouchableHighlight style={ReminderScreenStyle.customButton} onPress={onPress}>
+      <Text style={ReminderScreenStyle.customButtonText}>{title}</Text>
     </TouchableHighlight>
   );
 };
 
-
-const styles = StyleSheet.create({
-  container: {
-    paddingTop:"10%",
-    justifyContent: 'center',
-    alignItems: 'center',
-    // padding: 10, 
-  },
-  heading: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  inputField: {
-    width: '90%',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 20,
-    backgroundColor: 'white',
-    borderColor: 'black',
-  },
-  reminderItem: {
-    backgroundColor: 'white',
-    padding: 1,
-    marginBottom: 10,
-    borderRadius: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  reminderTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  reminderDate: {
-    fontSize: 12,
-  },
-  reminderTime: {
-    fontSize: 12,
-  },
-  reminderNote: {
-    fontSize: 12,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    width: '90%',
-    justifyContent: 'space-around', 
-  },
-  buttonCategoryContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    width: '90%',
-    justifyContent: 'space-around',
-  },
-  buttonContainerOne: {
-    flexDirection: 'row',
-    marginTop: 20,
-    width: '90%',
-    justifyContent: 'space-around', 
-  },
-  deleteButtonContainer: {
-    // backgroundColor: 'red',
-    padding: 3,
-    marginTop: 3,
-    borderRadius: 5,
-    
-    borderColor:"black",
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    color: 'black',
-    fontWeight: 'bold',
-  },
-  buttonContainerTwo: {
-    flexDirection: 'row',
-    marginTop: 5,
-    justifyContent: 'space-around',
-  },
-  customButton: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 10,
-  },
-  customButtonText: {
-    color: 'black',
-    textAlign: 'center',
-  },
-  centered: {
-    
-    padding: 20,
-    borderRadius: 50,
-    marginTop: 20,
-    alignItems: 'center', 
-  },
-  noteInputContainer: {
-    marginTop: 20,
-    width: '90%',
-  },
-  noteInput: {
-    width: '100%',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 10,
-    backgroundColor: 'white',
-    borderColor: 'black',
-    minHeight: 100,
-  },
-  chosenTimeCategoryContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-});

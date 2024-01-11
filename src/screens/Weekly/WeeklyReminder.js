@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity,TextInput,Modal,ScrollView,Alert} from 'react-native';
+import { View, Text, TouchableHighlight, TouchableOpacity,TextInput,Modal,ScrollView,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import WeeklyReminderStyle from './WeeklyReminderStyle';
 
 
 
@@ -50,7 +51,8 @@ export default function WeeklyReminder({ navigation }) {
     { label: '2', value: '2' },
     { label: '3', value: '3' },
     { label: '4', value: '4' },
-    { label: '5', value: '5' },   
+    { label: '5', value: '5' },
+
   ];
   const navigateToMainScreen = () => {
     navigation.navigate("Home");
@@ -282,6 +284,14 @@ export default function WeeklyReminder({ navigation }) {
         // Filter intervals for every 3 months
         return filterIntervalsByGap(intervals, 3);
       // Add more cases for other durations as needed
+      case '4':
+        // Filter intervals for every 3 months
+        return filterIntervalsByGap(intervals, 4);
+      // Add more cases for other durations as needed
+      case '5':
+        // Filter intervals for every 3 months
+        return filterIntervalsByGap(intervals, 5);
+      // Add more cases for other durations as needed
       default:
         return intervals;
     }
@@ -318,21 +328,21 @@ export default function WeeklyReminder({ navigation }) {
     if (isEndTimeSelected) {
       return (
         <View>
-          <View style={styles.rowContainer}>
+          <View style={WeeklyReminderStyle.rowContainer}>
             <Text style={{ color: 'black', marginTop: "5%" }}>EVERY</Text>
             <Text style={{ color: 'black', marginTop: "5%" }}>HOUR</Text>
             <Text style={{ color: 'black', marginTop: "5%" }}>MINUTE</Text>
           </View>
-          <View style={{ ...styles.rowContainer }}>
+          <View style={{ ...WeeklyReminderStyle.rowContainer }}>
             <TextInput
-              style={{ ...styles.input, marginLeft: "32%" }}
+              style={{ ...WeeklyReminderStyle.input, marginLeft: "32%" }}
               placeholder="0-23"
               onChangeText={handleHourChange}
               value={hour}
               keyboardType="numeric"
             />
             <TextInput
-              style={styles.input}
+              style={WeeklyReminderStyle.input}
               placeholder="0-59"
               onChangeText={handleMinuteChange}
               value={minute}
@@ -347,50 +357,50 @@ export default function WeeklyReminder({ navigation }) {
   
   
   return (
-    <View style={styles.container}>
+    <View style={WeeklyReminderStyle.container}>
         
 
-        <View style={styles.headerContainer}>
+        <View style={WeeklyReminderStyle.headerContainer}>
   <TouchableHighlight onPress={navigateToMainScreen}>
       {/* <Icon name="arrow-back" size={30} color="black" /> */}
       <Text>Back</Text>
   </TouchableHighlight>
 
-  <Text style={styles.title}>WEEKLY</Text>
+  <Text style={WeeklyReminderStyle.title}>WEEKLY</Text>
   <TouchableHighlight onPress={navigateToMainScreen}>
       <Text>Cancel</Text>
       </TouchableHighlight>
 
 </View>      
-<Text style={styles.text}>Repeat every at interval of every {selectedWeekDuration || "_"} week</Text>
-      <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
-      <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
-      <View style={styles.rowContainer}>
+<Text style={WeeklyReminderStyle.text}>Repeat every at interval of every {selectedWeekDuration || "_"} week</Text>
+      <Text style={WeeklyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
+      <Text style={WeeklyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <View style={WeeklyReminderStyle.rowContainer}>
       <Text style={{ color: 'black', paddingTop: '5%' }}>WEEKS:</Text>
 
       <ModalDropdown
   options={duration.map((item) => item.label)}
-  style={styles.customButtonDrop}
+  style={WeeklyReminderStyle.customButtonDrop}
   defaultValue={selectedDuration || 'Select Duration'}
   onSelect={(index, value) => handleDurationSelect(index, duration[index].value)}
-  textStyle={styles.dropdownText}
-  dropdownStyle={styles.dropdownContainer}
+  textStyle={WeeklyReminderStyle.dropdownText}
+  dropdownStyle={WeeklyReminderStyle.dropdownContainer}
   defaultIndex={0}
 />
 </View>
-<View style={{...styles.rowContainer}}>
+<View style={{...WeeklyReminderStyle.rowContainer}}>
       <Text style={{ color: 'black', paddingTop: '9%' }}>DAYS:</Text>
-        <View style={{...styles.monthChooser,marginLeft:"10%"}}>
+        <View style={{...WeeklyReminderStyle.monthChooser,marginLeft:"10%"}}>
       {weeks.map((week, index) => (
         <TouchableOpacity
           key={index}
           style={[
-            styles.weekOption,
-            selectedWeeks.includes(week) ? styles.selectedMonthOption : null
+            WeeklyReminderStyle.weekOption,
+            selectedWeeks.includes(week) ? WeeklyReminderStyle.selectedMonthOption : null
           ]}
           onPress={() => toggleWeekSelection(week)}
         >
-          <Text style={styles.monthText}>{week}</Text>
+          <Text style={WeeklyReminderStyle.monthText}>{week}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -398,33 +408,33 @@ export default function WeeklyReminder({ navigation }) {
 
 
      
-      <View style={styles.rowContainer}>
+      <View style={WeeklyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={WeeklyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartDatePicker}>
-      <Text style={styles.customButtonText}>Start Date </Text>
+            <TouchableHighlight style={WeeklyReminderStyle.customButton} onPress={showStartDatePicker}>
+      <Text style={WeeklyReminderStyle.customButtonText}>Start Date </Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndDatePicker}>
-      <Text style={styles.customButtonText}>End Date </Text>
+            <TouchableHighlight style={WeeklyReminderStyle.customButton} onPress={showEndDatePicker}>
+      <Text style={WeeklyReminderStyle.customButtonText}>End Date </Text>
     </TouchableHighlight>
           </View>
         </View>
         
       </View>
-      <View style={styles.rowContainer}>
+      <View style={WeeklyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={WeeklyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartTimePicker}>
-      <Text style={styles.customButtonText}>Start Time</Text>
+            <TouchableHighlight style={WeeklyReminderStyle.customButton} onPress={showStartTimePicker}>
+      <Text style={WeeklyReminderStyle.customButtonText}>Start Time</Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndTimePicker}>
-      <Text style={styles.customButtonText}>End Time</Text>
+            <TouchableHighlight style={WeeklyReminderStyle.customButton} onPress={showEndTimePicker}>
+      <Text style={WeeklyReminderStyle.customButtonText}>End Time</Text>
     </TouchableHighlight>
           </View>
         </View>
@@ -433,7 +443,7 @@ export default function WeeklyReminder({ navigation }) {
     
   {renderHourMinuteInputs()}
 
-{/* <View style={styles.rowContainer}>
+{/* <View style={WeeklyReminderStyle.rowContainer}>
 <Text style={{ color: 'black',marginTop:"5%" }}>EVERY</Text>
 
 <Text style={{ color: 'black',marginTop:"5%"  }}>HOUR</Text>
@@ -442,16 +452,16 @@ export default function WeeklyReminder({ navigation }) {
 
 
 </View>
-<View style={{...styles.rowContainer}}>
+<View style={{...WeeklyReminderStyle.rowContainer}}>
       <TextInput
-        style={{...styles.input,marginLeft:"32%"}}
+        style={{...WeeklyReminderStyle.input,marginLeft:"32%"}}
         placeholder="1-23"
         onChangeText={handleHourChange}
         value={hour}
         keyboardType="numeric"
       />
       <TextInput
-        style={styles.input}
+        style={WeeklyReminderStyle.input}
         placeholder="1-59"
         onChangeText={handleMinuteChange}
         value={minute}
@@ -459,8 +469,8 @@ export default function WeeklyReminder({ navigation }) {
       />
    
     </View> */}
-<TouchableOpacity style={styles.customButtonDone} onPress={setReminder}>
-  <Text style={{...styles.customButtonText,fontWeight:"bold"}}>Done</Text>
+<TouchableOpacity style={WeeklyReminderStyle.customButtonDone} onPress={setReminder}>
+  <Text style={{...WeeklyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
 <Modal
         animationType="slide"
@@ -470,15 +480,15 @@ export default function WeeklyReminder({ navigation }) {
           toggleModal();
         }}
       >
-        <View style={styles.modalContainer}>
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Intervals:</Text>
+        <View style={WeeklyReminderStyle.modalContainer}>
+          <ScrollView style={WeeklyReminderStyle.modalContent}>
+            <Text style={WeeklyReminderStyle.modalTitle}>Intervals:</Text>
             {intervals.map((interval, index) => (
-              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+              <Text key={index} style={WeeklyReminderStyle.modalText}>{`${interval.date} - ${interval.time}`}</Text>
             ))}
           </ScrollView>
-          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-            <Text style={styles.modalButtonText}>Close</Text>
+          <TouchableOpacity style={WeeklyReminderStyle.modalButton} onPress={toggleModal}>
+            <Text style={WeeklyReminderStyle.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -519,168 +529,3 @@ export default function WeeklyReminder({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 14,
-    margin: 8,
-  },
- 
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: 'black',
-  },
-  text: {
-    marginBottom: 8,
-    color: 'black',
-  },
-
-  dropdownContainer: {
-    height: 40,
-color:"red",
-    marginBottom: 8,
-    width: "30%",
-    marginLeft: "45%",
-    marginTop: "3%",
-
-  },
- 
-  pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginLeft: "20%",
-    marginTop: "7%",
-    
-  },
-  monthChooser: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    
-
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    // alignItems: 'center',
-    justifyContent: 'space-between',
-    
-   
-    // Add more styles as needed
-  },
-
- 
-  monthText: {
-    textAlign: 'center',
-    color: 'black',
-  },
-  weekOption: {
-    width: '12%',
-  marginTop:"10%",
-  
-   padding:"1%",
-    borderWidth: 1,
-    borderColor: 'black',
-    
-  },
-  dropdownContainer: {
-    width: 120,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-  },
-  dropdownText: {
-    fontSize: 16,
-    padding: "auto",
-  },
-  customButton: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 5,
-    margin:"3%",
-
-    
-  },
-  customButtonDrop: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    width:125,
-    height:40,
-    marginTop:"5%",
-    padding:"2%"
-  },
-  customButtonText: {
-    color: 'black',
-    textAlign: 'center',
-  },
-  
-  optionContainer: {
-    flexDirection: 'row',
-    marginTop: 36,
-    
-    
-  },
-  option: {
-    width: 20,
-    height: 20,
-    borderRadius: 50,
-    backgroundColor: 'gray',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin:3,
-    marginLeft:5,
-    marginRight:15
-  },
- 
-
-
-  customButtonDone: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 10,
-    marginTop:"75%",
-    
-    
-    backgroundColor:"gray",
-    
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'black',
-    width: 80,
-    height:40, 
-    textAlign: 'center',
-  },
-  selectedMonthOption: {
-    backgroundColor: 'blue',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-
-  modalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-
-  closeButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-});
-

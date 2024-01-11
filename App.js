@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ReminderScreen from './src/screens/ReminderScreen';
-import DailyReminder from './src/screens/DailyReminder';
-import HourlyReminder from './src/screens/HourlyReminder';
-import WeeklyReminder from './src/screens/WeeklyReminder';
-import MonthlyReminder from './src/screens/MonthlyReminder';
-import YearlyReminder from './src/screens/YearlyReminder';
+import ReminderScreen from './src/screens/Once/ReminderScreen';
+import DailyReminder from './src/screens/Daily/DailyReminder';
+import HourlyReminder from './src/screens/Hourly/HourlyReminder';
+import WeeklyReminder from './src/screens/Weekly/WeeklyReminder';
+import MonthlyReminder from './src/screens/Monthly/MonthlyReminder';
+import YearlyReminder from './src/screens/Yearly/YearlyReminder';
 import PushNotification from 'react-native-push-notification';
-import DetailScreen from './src/helper/DetailScreen';
-import OnceListing from './src/screens/OnceListing';
+import DetailScreen from './src/screens/Detail/DetailScreen';
+import OnceListing from './src/screens/Listing/OnceListing';
 
 const Stack = createNativeStackNavigator();
 

@@ -1,10 +1,10 @@
 import React, { startTransition, useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
+import { View, Text, Styleheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Calendar} from 'react-native-calendars';
-
+import MonthlyReminderStyle from './MonthlyReminderStyle';
 
 
 
@@ -347,24 +347,25 @@ export default function MonthlyReminder({navigation}) {
       const filteredIntervals = filterIntervalsByDuration(filteredData, selectedDuration);
 
       setIntervals(filteredIntervals);
-      console.log("fliterdata",filteredData)
+      console.log("real",filteredData)
       toggleModal();
 
       const startTimestamp = startDateTime.getTime();
 const endTimestamp = endDateTime.getTime();
 
       navigation.navigate('Details', {
-        startDateTime: startTimestamp,
-        endDateTime: endTimestamp,
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
         selectedStartTime: selectedStartTime,
         selectedEndTime: selectedEndTime,
         hour: hour,
         minute: minute,
+        selectedDates: selectedDates,
+        filteredData:filteredData,
         selectedDuration: selectedDuration,
-        selectedWeeks: selectedWeeks,
-        intervals:intervals,
+        
+
     });
-    console.log("---",startDateTime)
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -431,7 +432,7 @@ const endTimestamp = endDateTime.getTime();
       // console.log('Intervals:', intervals);
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
 
-      console.log('Filtered Intervals:', filteredIntervals);
+      console.log('real2:', filteredIntervals);
       setIntervals(filteredIntervals);
       toggleModal();
 
@@ -445,7 +446,7 @@ const endTimestamp = endDateTime.getTime();
         selectedDuration: selectedDuration,
         selectedWeeks: selectedWeeks,
         selectedDates: selectedDates,
-        intervals:intervals,
+        filteredIntervals:filteredIntervals,
       });
     } else {
       Alert.alert(
@@ -465,51 +466,51 @@ const endTimestamp = endDateTime.getTime();
   
   
   return (
-    <View style={styles.container}>
+    <View style={MonthlyReminderStyle.container}>
 
-        <View style={styles.headerContainer}>
+        <View style={MonthlyReminderStyle.headerContainer}>
   <TouchableHighlight onPress={navigateToMainScreen}>
       {/* <Icon name="arrow-back" size={30} color="black" /> */}
       <Text>Back</Text>
   </TouchableHighlight>
 
-  <Text style={styles.title}>MONTHLY</Text>
+  <Text style={MonthlyReminderStyle.title}>MONTHLY</Text>
   <TouchableHighlight onPress={navigateToMainScreen}>
       <Text>Cancel</Text>
       </TouchableHighlight>
 
 </View>      
-    <Text style={styles.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
-      <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
-      <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+    <Text style={MonthlyReminderStyle.text}>Repeat at an interval of {selectedDuration || "_"} weeks</Text>
+      <Text style={MonthlyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
+      <Text style={MonthlyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
      
-      <View style={styles.rowContainer}>
+      <View style={MonthlyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={MonthlyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartDatePicker}>
-      <Text style={styles.customButtonText}>Start Date </Text>
+            <TouchableHighlight style={MonthlyReminderStyle.customButton} onPress={showStartDatePicker}>
+      <Text style={MonthlyReminderStyle.customButtonText}>Start Date </Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndDatePicker}>
-      <Text style={styles.customButtonText}>End Date </Text>
+            <TouchableHighlight style={MonthlyReminderStyle.customButton} onPress={showEndDatePicker}>
+      <Text style={MonthlyReminderStyle.customButtonText}>End Date </Text>
     </TouchableHighlight>
           </View>
         </View>
         
       </View>
-      <View style={styles.rowContainer}>
+      <View style={MonthlyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={MonthlyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartTimePicker}>
-      <Text style={styles.customButtonText}>Start Time</Text>
+            <TouchableHighlight style={MonthlyReminderStyle.customButton} onPress={showStartTimePicker}>
+      <Text style={MonthlyReminderStyle.customButtonText}>Start Time</Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndTimePicker}>
-      <Text style={styles.customButtonText}>End Time</Text>
+            <TouchableHighlight style={MonthlyReminderStyle.customButton} onPress={showEndTimePicker}>
+      <Text style={MonthlyReminderStyle.customButtonText}>End Time</Text>
     </TouchableHighlight>
           </View>
         </View>
@@ -517,23 +518,23 @@ const endTimestamp = endDateTime.getTime();
       </View>
       <View >
       
-      <View style={styles.optionContainer}>
-      <Text style={styles.optionText}>Week</Text>
+      <View style={MonthlyReminderStyle.optionContainer}>
+      <Text style={MonthlyReminderStyle.optionText}>Week</Text>
 
         <TouchableOpacity
           style={[
-            styles.option,
-            selectedOption === 'week' ? styles.selectedOption : null
+            MonthlyReminderStyle.option,
+            selectedOption === 'week' ? MonthlyReminderStyle.selectedOption : null
           ]}
           onPress={() => handleOptionPress('week')}
         >
         </TouchableOpacity>
-        <Text style={styles.optionText}>Day</Text>
+        <Text style={MonthlyReminderStyle.optionText}>Day</Text>
 
         <TouchableOpacity
           style={[
-            styles.option,
-            selectedOption === 'day' ? styles.selectedOption : null
+            MonthlyReminderStyle.option,
+            selectedOption === 'day' ? MonthlyReminderStyle.selectedOption : null
           ]}
           onPress={() => handleOptionPress('day')}
         >
@@ -541,52 +542,52 @@ const endTimestamp = endDateTime.getTime();
       </View>
 
       </View>
-      <View style={styles.rowContainer}>
+      <View style={MonthlyReminderStyle.rowContainer}>
   {selectedOption === 'week' ? (
     <View>
-       <View style={styles.rowContainer}>
+       <View style={MonthlyReminderStyle.rowContainer}>
       <Text style={{ color: 'black', paddingTop: '6%' }}>WEEKS:</Text>
       
 
     <ModalDropdown
   options={duration.map((item) => item.label)}
-  style={styles.customButtonDrop}
+  style={MonthlyReminderStyle.customButtonDrop}
   defaultValue={selectedDuration || 'Select Duration'}
   onSelect={(index, value) => handleDurationSelect(index, duration[index].value)}
-  textStyle={styles.dropdownText}
-  dropdownStyle={styles.dropdownContainer}
+  textStyle={MonthlyReminderStyle.dropdownText}
+  dropdownStyle={MonthlyReminderStyle.dropdownContainer}
   defaultIndex={0}
 />
     </View>
      
-        {/* <View style={styles.rowContainer}>
+        {/* <View style={MonthlyReminderStyle.rowContainer}>
       <Text style={{ color: 'black', paddingTop: '5%' }}>WEEKS:</Text>
 
       <ModalDropdown
   options={weekDuration.map((item) => item.label)}
-  style={styles.customButtonDrop}
+  style={MonthlyReminderStyle.customButtonDrop}
   defaultValue={selectedMonth !== null ? String(selectedMonth) : "Select Duration"} 
   onSelect={(index, value) => selectMonth(index, duration[index].value)}
-  textStyle={styles.dropdownText}
-  dropdownStyle={styles.dropdownContainer}
+  textStyle={MonthlyReminderStyle.dropdownText}
+  dropdownStyle={MonthlyReminderStyle.dropdownContainer}
   defaultIndex={1}  
 />
 
 
       </View> */}
-      <View style={{...styles.rowContainer}}>
+      <View style={{...MonthlyReminderStyle.rowContainer}}>
       <Text style={{ color: 'black', paddingTop: '9%' }}>DAYS:</Text>
-        <View style={{...styles.monthChooser,marginLeft:"10%"}}>
+        <View style={{...MonthlyReminderStyle.monthChooser,marginLeft:"10%"}}>
       {weeks.map((week, index) => (
         <TouchableOpacity
           key={index}
           style={[
-            styles.weekOption,
-            selectedWeeks.includes(week) ? styles.selectedMonthOption : null
+            MonthlyReminderStyle.weekOption,
+            selectedWeeks.includes(week) ? MonthlyReminderStyle.selectedMonthOption : null
           ]}
           onPress={() => toggleWeekSelection(week)}
         >
-          <Text style={styles.monthText}>{week}</Text>
+          <Text style={MonthlyReminderStyle.monthText}>{week}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -597,11 +598,11 @@ const endTimestamp = endDateTime.getTime();
     
   ) : selectedOption === 'day' ? (
     <View>
-    <View style={styles.rowContainer}>
-    <Text style={styles.header}>Selected Dates:</Text>
+    <View style={MonthlyReminderStyle.rowContainer}>
+    <Text style={MonthlyReminderStyle.header}>Selected Dates:</Text>
    
-    <TouchableHighlight style={{...styles.customButton,marginLeft:"32%"}} onPress={openModal}>
-      <Text style={{...styles.customButtonText}}>CHOOSE DATES</Text>
+    <TouchableHighlight style={{...MonthlyReminderStyle.customButton,marginLeft:"32%"}} onPress={openModal}>
+      <Text style={{...MonthlyReminderStyle.customButtonText}}>CHOOSE DATES</Text>
     </TouchableHighlight>
 
     <Modal
@@ -609,7 +610,7 @@ const endTimestamp = endDateTime.getTime();
       animationType="slide"
       transparent={false}
     >
-      <View style={styles.modalContainer}>
+      <View style={MonthlyReminderStyle.modalContainer}>
       <View style={{ padding: 20 }}>
         <Text >CHOOSE DATES
       {Object.keys(selectedDates).join(', ')}
@@ -642,7 +643,7 @@ const endTimestamp = endDateTime.getTime();
     
     </Modal>
     </View>
-  <Text style={styles.selectedDatesText}>
+  <Text style={MonthlyReminderStyle.selectedDatesText}>
       {Object.keys(selectedDates).join(', ')}
     </Text>
     </View>
@@ -650,7 +651,7 @@ const endTimestamp = endDateTime.getTime();
     ) : null}
 </View>
 
-<View style={styles.rowContainer}>
+<View style={MonthlyReminderStyle.rowContainer}>
 <Text style={{ color: 'black',marginTop:"5%" }}>EVERY</Text>
 
 <Text style={{ color: 'black',marginTop:"5%"  }}>HOUR</Text>
@@ -659,25 +660,25 @@ const endTimestamp = endDateTime.getTime();
 
 
 </View>
-<View style={{...styles.rowContainer}}>
+<View style={{...MonthlyReminderStyle.rowContainer}}>
       <TextInput
-        style={{...styles.input,marginLeft:"32%"}}
+        style={{...MonthlyReminderStyle.input,marginLeft:"32%"}}
         placeholder="0-23"
         onChangeText={handleHourChange}
         value={hour}
         keyboardType="numeric"
       />
       <TextInput
-        style={styles.input}
+        style={MonthlyReminderStyle.input}
         placeholder="0-59"
         onChangeText={handleMinuteChange}
         value={minute}
         keyboardType="numeric"
       />
-      {/* <Text style={styles.errorText}>{hourError}</Text>
-      <Text style={styles.errorText}>{minuteError}</Text> */}
+      {/* <Text style={MonthlyReminderStyle.errorText}>{hourError}</Text>
+      <Text style={MonthlyReminderStyle.errorText}>{minuteError}</Text> */}
     </View>
-    <TouchableOpacity style={styles.customButtonDone} onPress={() => {
+    <TouchableOpacity style={MonthlyReminderStyle.customButtonDone} onPress={() => {
   if (selectedOption === 'week') {
     setReminder();
   } else if (selectedOption === 'day') {
@@ -697,7 +698,7 @@ Alert.alert(
         ]
       );  }
 }}>
-  <Text style={{...styles.customButtonText, fontWeight: "bold"}}>Done</Text>
+  <Text style={{...MonthlyReminderStyle.customButtonText, fontWeight: "bold"}}>Done</Text>
   <Modal
         animationType="slide"
         transparent={true}
@@ -706,16 +707,16 @@ Alert.alert(
           toggleModal();
         }}
       >
-        <View style={styles.modalContainer}>
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Intervals:</Text>
+        <View style={MonthlyReminderStyle.modalContainer}>
+          <ScrollView style={MonthlyReminderStyle.modalContent}>
+            <Text style={MonthlyReminderStyle.modalTitle}>Intervals:</Text>
             {intervals.map((interval, index) => (
 
-              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+              <Text key={index} style={MonthlyReminderStyle.modalText}>{`${interval.date} - ${interval.time}`}</Text>
             ))}
           </ScrollView>
-          <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
-            <Text style={styles.modalButtonText}>Close</Text>
+          <TouchableOpacity style={MonthlyReminderStyle.modalButton} onPress={toggleModal}>
+            <Text style={MonthlyReminderStyle.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -757,219 +758,3 @@ Alert.alert(
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 14,
-    margin: 8,
-  },
- 
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: 'black',
-  },
-  text: {
-    marginBottom: 8,
-    color: 'black',
-  },
-
-  dropdownContainer: {
-    height: 40,
-color:"red",
-    marginBottom: 8,
-    width: "30%",
-    marginLeft: "45%",
-    marginTop: "3%",
-
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    // alignItems: 'center',
-    justifyContent: 'space-between',
-    
-   
-    // Add more styles as needed
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginLeft: "20%",
-    marginTop: "7%",
-    
-  },
-  monthChooser: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    
-
-  },
-  monthOption: {
-    width: '15%',
-    margin: 0,
-   padding:"1%",
-    borderWidth: 1,
-    borderColor: 'black',
-    
-  },
-  selectedMonthOption: {
-    backgroundColor: 'blue',
-  },
-  monthText: {
-    textAlign: 'center',
-    color: 'black',
-  },
-  weekOption: {
-    width: '12%',
-  marginTop:"10%",
-  
-   padding:"1%",
-    borderWidth: 1,
-    borderColor: 'black',
-    
-  },
-  dropdownContainer: {
-    width: 120,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-  },
-  dropdownText: {
-    fontSize: 16,
-    padding: "auto",
-  },
-  customButton: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 5,
-    margin:"3%",
-
-    
-  },
-  customButtonDrop: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    width:125,
-    height:40,
-    marginTop:"5%",
-    padding:"2%"
-  },
-  customButtonText: {
-    color: 'black',
-    textAlign: 'center',
-  },
-  circle: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmark: {
-    color: 'white',
-    fontSize: 24,
-  },
-   circleStyle : {
-    width: 100,
-    height: 100,
-    borderRadius: 100 / 2,
-    backgroundColor: "white" || 'green',
-  },
-  optionContainer: {
-    flexDirection: 'row',
-    marginTop: 36,
-    
-    
-  },
-  option: {
-    width: 20,
-    height: 20,
-    borderRadius: 50,
-    backgroundColor: 'gray',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin:3,
-    marginLeft:5,
-    marginRight:15
-  },
-  selectedOption: {
-    backgroundColor: 'black',
-  },
-  optionText: {
-    color: 'black',
-    fontSize: 16,
-  
-  },
- 
-  header: {
-    fontSize: 16,
-    marginTop: "1%",
-    color: 'black',
-  },
-  selectedDatesText: {
-    
-
-    fontSize: 10,
-    color: 'black',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-  },
-  customButtonDone: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 10,
-    marginTop:"10%",
-    
-    
-    backgroundColor:"gray",
-    
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'black',
-    width: 80,
-    height:40, 
-    textAlign: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-
-  modalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-
-  closeButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-});
-
-const calendarTheme = {
-  textSectionTitleColor: 'black',
-  selectedDayBackgroundColor: 'black',
-  selectedDayTextColor: 'white',
-  todayTextColor: 'black',
-  dayTextColor: 'black',
-  arrowColor: 'black',
-  monthTextColor: 'black',
-  textMonthFontWeight: 'bold',
-};

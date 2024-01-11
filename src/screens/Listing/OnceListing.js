@@ -1,9 +1,9 @@
 import React,{useEffect,useState} from 'react';
-import { View, Text, FlatList,Button ,StyleSheet,TouchableHighlight, ScrollView} from 'react-native';
+import { View, Text, FlatList, Button, StyleSheet, TouchableHighlight, ScrollView, Alert } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
 import { useNavigation } from '@react-navigation/native';
 
-
+import ListingStyle from './ListingStyle';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
@@ -19,22 +19,42 @@ const OnceListing = ({ route }) => {
 useEffect(()=>{
   fetchUpdatedReminders()
 },[])
-  const deleteReminder = (id) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        'DELETE FROM reminders WHERE id = ?',
-        [id],
-        (tx, result) => {
-          console.log('Reminder deleted successfully');
-          // After deleting, fetch and update the reminders
-          fetchUpdatedReminders();
-        },
-        (error) => {
-          console.log('Error deleting reminder:', error);
-        }
-      );
-    });
-  };
+const deleteReminder = (id) => {
+  Alert.alert(
+    'Confirm Deletion',
+    'Are you sure you want to delete this reminder?',
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Delete',
+        onPress: () => confirmDelete(id), // Call confirmDelete if the user presses 'Delete'
+        style: 'destructive',
+      },
+    ],
+    { cancelable: false }
+  );
+};
+
+const confirmDelete = (id) => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      'DELETE FROM reminders WHERE id = ?',
+      [id],
+      (tx, result) => {
+        console.log('Reminder deleted successfully');
+        // After deleting, fetch and update the reminders
+        fetchUpdatedReminders();
+      },
+      (error) => {
+        console.log('Error deleting reminder:', error);
+      }
+    );
+  });
+};
+
 
   const fetchUpdatedReminders = () => {
     db.transaction((tx) => {
@@ -67,36 +87,36 @@ useEffect(()=>{
   };
   return (
     
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
+    <View style={ListingStyle.container}>
+      <View style={ListingStyle.headerContainer}>
         <TouchableHighlight onPress={navigateToMainScreen}>
           <Text>Back</Text>
         </TouchableHighlight>
 
-        <Text style={styles.title}>ONCE REMINDER</Text>
+        <Text style={ListingStyle.title}>ONCE REMINDER</Text>
 
         <TouchableHighlight onPress={navigateToMainScreen}>
           <Text>Add</Text>
         </TouchableHighlight>
       </View>
 <ScrollView>
-<View style={styles.reminderContainer}>
+<View style={ListingStyle.reminderContainer}>
   {reminders.map((item) => (
-    <View key={item.id} style={styles.singleReminder}>
-      <View style={styles.reminderTextContainer}>
-        <Text style={styles.titleText}>Title: {item.title}</Text>
-        <View style={styles.buttonContainer}>
+    <View key={item.id} style={ListingStyle.singleReminder}>
+      <View style={ListingStyle.reminderTextContainer}>
+        <Text style={ListingStyle.titleText}>Title: {item.title}</Text>
+        <View style={ListingStyle.buttonContainer}>
           <TouchableHighlight onPress={() => editReminder(item.id)}>
-            <Text style={styles.editButton}>Edit</Text>
+            <Text style={ListingStyle.editButton}>Edit</Text>
           </TouchableHighlight>
           <TouchableHighlight onPress={() => deleteReminder(item.id)}>
-            <Text style={styles.deleteButton}>Delete</Text>
+            <Text style={ListingStyle.deleteButton}>Delete</Text>
           </TouchableHighlight>
         </View>
       </View>
       <Text>Note: {item.note}</Text>
       <Text>Date: {item.date.toLocaleString()}</Text>
-      <View style={styles.divider} />
+      <View style={ListingStyle.divider} />
     </View>
   ))}
 </View>
@@ -105,57 +125,5 @@ useEffect(()=>{
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  reminderContainer: {
-    flex: 1,
-  },
-  singleReminder: {
-    marginBottom: 15,
-  },
-  reminderTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  titleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    paddingTop:"1%"
-  },
-  noteText: {
-    fontSize: 16,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  deleteButton: {
-    color: 'red',
-    marginLeft: "15%",
-  },
-  editButton: {
-    color: 'green',
-    marginLeft: 10,
-  },
-  divider: {
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-    marginBottom: 10,
-  },
-});
 
 export default OnceListing;

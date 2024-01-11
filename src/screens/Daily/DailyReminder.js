@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
+import { View, Text, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import Icon from 'react-native-vector-icons/Ionicons';
+import DailyReminderStyle from './DailyReminderstyle';
+import ModalDropdown from 'react-native-modal-dropdown';
 
 
-
-export default function HourlyReminder({ navigation }) {
+export default function DailyReminder({ navigation }) {
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
+  const [selectedDailyDuration, setSelectedDailyDuration] = useState(null);
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
+
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
+
   const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisibility] = useState(false);
   const [selectedStartTime, setSelectedStartTime] = useState(new Date());
@@ -22,6 +25,7 @@ export default function HourlyReminder({ navigation }) {
   const [chosenEndDate, setChosenEndDate] = useState(null);
   const [chosenStartTime, setChosenStartTime] = useState(null);
   const [chosenEndTime, setChosenEndTime] = useState(null);
+  
   const [hourError, setHourError] = useState('');
   const [minuteError, setMinuteError] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
@@ -31,12 +35,28 @@ export default function HourlyReminder({ navigation }) {
     setModalVisible(!isModalVisible);
   };
 
-  const navigateToMainScreen = () => {
-    navigation.navigate("Home");
-  };
+
+ const dailyDuration = [
+  { label: '1', value: '1' },
+  { label: '2', value: '2' },
+  { label: '3', value: '3' },
+  { label: '4', value: '4' },
+  { label: '5', value: '5' },
+  { label: '6', value: '6' },
+  { label: '7', value: '7' },
+
+
+ ];
  
+ const reopenStartDatePicker = () => {
+  setStartDatePickerVisible(true);
+};
+
 const reopenEndDatePicker = () => {
   setEndDatePickerVisible(true);
+};
+const navigateToMainScreen = () => {
+  navigation.navigate("Home");
 };
 
 const handleDateConfirm = (date, isStartDate) => {
@@ -77,13 +97,20 @@ const handleDateConfirm = (date, isStartDate) => {
 
 
   
+ 
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
     setChosenStartTime(time.toLocaleTimeString()); // Convert to a string representation
     hideStartTimePicker();
   };
   
- 
+  const handleEndTimeConfirm = (time) => {
+    setSelectedEndTime(time);
+    setChosenEndTime(time.toLocaleTimeString()); // Convert to a string representation
+    hideEndTimePicker();
+    setIsEndTimeSelected(true); // Set the flag when the end time is selected
+
+  };
     const handleHourChange = (text) => {
     const numericValue = parseInt(text, 10);
     if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 23) {
@@ -94,6 +121,7 @@ const handleDateConfirm = (date, isStartDate) => {
       setHourError('Hour must be between 1 and 23');
     }
   };
+
   
   const handleMinuteChange = (text) => {
     const numericValue = parseInt(text, 10);
@@ -106,17 +134,9 @@ const handleDateConfirm = (date, isStartDate) => {
     }
   };
   
-  const handleEndTimeConfirm = (time) => {
-    setSelectedEndTime(time);
-    setChosenEndTime(time.toLocaleTimeString());
-    hideEndTimePicker();
-    setIsEndTimeSelected(true); // Set the flag when the end time is selected
-  };
-
  
  
  
-  
 
 
   const hideStartDatePicker = () => {
@@ -136,87 +156,13 @@ const handleDateConfirm = (date, isStartDate) => {
   // Function to handle the selected start time
  
   // Function to show the end time picker
-
+  
 
   // Function to hide the end time picker
   const hideEndTimePicker = () => {
     setEndTimePickerVisibility(false);
   };
 
-  const setReminder = () => {
-    if (
-      selectedStartDate &&
-      selectedStartTime &&
-      hour &&
-      minute
-    ) {
-      const startDateTime = new Date(
-        selectedStartDate.getFullYear(),
-        selectedStartDate.getMonth(),
-        selectedStartDate.getDate(),
-        selectedStartTime.getHours(),
-        selectedStartTime.getMinutes()
-      );
-  
-      // Set end date and time to be the same as start date and time if not provided
-      const endDateTime = selectedEndDate
-        ? new Date(
-            selectedEndDate.getFullYear(),
-            selectedEndDate.getMonth(),
-            selectedEndDate.getDate(),
-            selectedEndTime.getHours(),
-            selectedEndTime.getMinutes()
-          )
-        : new Date(startDateTime);
-  
-      // Check if the end date is later than the start date
-      if (endDateTime < startDateTime) {
-        console.warn('End date & time must be later than start date & time ');
-        return; // Exit the function if the validation fails
-      }
-  
-      const intervalInMillis = (parseInt(hour) * 60 + parseInt(minute)) * 60 * 1000;
-  
-      let currentDateTime = new Date(startDateTime);
-  
-      const calculatedIntervals = [];
-  
-      while (currentDateTime <= endDateTime) {
-        const currentDate = new Date(currentDateTime);
-        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
-  
-        const endDate = new Date(currentDateTime);
-        endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
-  
-        while (currentDate <= endDate) {
-          calculatedIntervals.push({
-            date: currentDate.toDateString(),
-            time: currentDate.toLocaleTimeString(),
-          });
-          currentDate.setTime(currentDate.getTime() + intervalInMillis);
-        }
-  
-        currentDateTime.setDate(currentDateTime.getDate() + 1);
-        currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
-      }
-  
-      setIntervals(calculatedIntervals);
-      toggleModal();
-    } else {
-      Alert.alert(
-        'Error',
-        'Incomplete data to set Reminder',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Reopen the end date picker to set the correct end date
-              // reopenEndDatePicker(); // Reopen end date picker
-            },
-          },
-        ]
-      );    }
-  };
   const showStartDatePicker = () => {
     setStartDatePickerVisible(true);
   };
@@ -232,26 +178,129 @@ const handleDateConfirm = (date, isStartDate) => {
   const showEndTimePicker = () => {
     setEndTimePickerVisibility(true);
   };
+  const selectDailyDuration = (index, value) => {
+    setSelectedDailyDuration(value);
+  };
+  const navigateToDetailScreen = () => {
+    navigation.navigate('Details', {
+      startDateTime: selectedStartDate,
+      endDateTime: selectedEndDate,
+      selectedStartTime,
+      selectedEndTime,
+      hour,
+      minute,
+      selectedDailyDuration,
+      intervals: intervals, // Pass intervals data
+    });
+  };
+  const setReminder = () => {
+    if (
+      selectedStartDate &&
+      selectedStartTime &&
+      hour &&
+      minute &&
+      selectedDailyDuration
+    ) {
+      let endDate = selectedStartDate; // Default end date to start date
+      let endTime = selectedStartTime; // Default end time to start time
+  
+      if (selectedEndDate && selectedEndTime) {
+        endDate = selectedEndDate;
+        endTime = selectedEndTime;
+      }
+  
+      if (endDate <= selectedStartDate) {
+        console.warn('End date should be greater than the start date');
+        // Display an alert to the user
+        Alert.alert(
+          'Error',
+          'End date should be greater than the start date',
+          [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+        );
+        return;
+      }
+      const startDateTime = new Date(
+        selectedStartDate.getFullYear(),
+        selectedStartDate.getMonth(),
+        selectedStartDate.getDate(),
+        selectedStartTime.getHours(),
+        selectedStartTime.getMinutes()
+      );
+  
+      const endDateTime = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+        endTime.getHours(),
+        endTime.getMinutes()
+      );
+  
+      const intervalInMillis = (parseInt(hour) * 60 + parseInt(minute)) * 60 * 1000;
+      const dailyDurationInDays = parseInt(selectedDailyDuration);
+  
+      let currentDateTime = new Date(startDateTime);
+  
+      const calculatedIntervals = [];
+  
+      while (currentDateTime <= endDateTime) {
+        const currentDate = new Date(currentDateTime);
+        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+  
+        const loopEndTime = new Date(currentDateTime);
+        loopEndTime.setHours(endTime.getHours(), endTime.getMinutes());
+  
+        while (currentDate <= loopEndTime) {
+          calculatedIntervals.push({
+            date: currentDate.toDateString(),
+            time: currentDate.toLocaleTimeString(),
+          });
+          currentDate.setTime(currentDate.getTime() + intervalInMillis);
+        }
+  
+        currentDateTime.setDate(currentDateTime.getDate() + dailyDurationInDays);
+        currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
+      }
+      navigateToDetailScreen(); // Navigate to DetailScreen
+
+      setIntervals(calculatedIntervals);
+      toggleModal();
+    } else {
+      Alert.alert(
+        'Error',
+        'Incomplete data to set Reminder',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Reopen the end date picker to set the correct end date
+              // reopenEndDatePicker(); // Reopen end date picker
+            },
+          },
+        ]
+      );
+    }
+  };
+  
   
   const renderHourMinuteInputs = () => {
     if (isEndTimeSelected) {
       return (
         <View>
-          <View style={styles.rowContainer}>
+          <View style={DailyReminderStyle.rowContainer}>
             <Text style={{ color: 'black', marginTop: "5%" }}>EVERY</Text>
             <Text style={{ color: 'black', marginTop: "5%" }}>HOUR</Text>
             <Text style={{ color: 'black', marginTop: "5%" }}>MINUTE</Text>
           </View>
-          <View style={{ ...styles.rowContainer }}>
+          <View style={{ ...DailyReminderStyle.rowContainer }}>
             <TextInput
-              style={{ ...styles.input, marginLeft: "32%" }}
+              style={{ ...DailyReminderStyle.input, marginLeft: "32%" }}
               placeholder="0-23"
               onChangeText={handleHourChange}
               value={hour}
               keyboardType="numeric"
             />
             <TextInput
-              style={styles.input}
+              style={DailyReminderStyle.input}
               placeholder="0-59"
               onChangeText={handleMinuteChange}
               value={minute}
@@ -264,67 +313,78 @@ const handleDateConfirm = (date, isStartDate) => {
     return null; // Render nothing if end time is not selected
   };
   
-  
+
   return (
-    <View style={styles.container}>
+    <View style={DailyReminderStyle.container}>
         
-        <View style={styles.headerContainer}>
+
+        <View style={DailyReminderStyle.headerContainer}>
   <TouchableHighlight onPress={navigateToMainScreen}>
       {/* <Icon name="arrow-back" size={30} color="black" /> */}
       <Text>Back</Text>
   </TouchableHighlight>
 
-  <Text style={styles.title}>HOURLY</Text>
+  <Text style={DailyReminderStyle.title}>DAILY</Text>
   <TouchableHighlight onPress={navigateToMainScreen}>
       <Text>Cancel</Text>
       </TouchableHighlight>
 
 </View>
-      <Text style={styles.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
-      <Text style={styles.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <Text style={DailyReminderStyle.text}>Repeat every at interval of every {selectedDailyDuration || "_"} day</Text>
+
+      <Text style={DailyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
+      <Text style={DailyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <View style={DailyReminderStyle.rowContainer}>
+ <Text style={{ color: 'black', paddingTop: '5%' }}>DAILY EVERY:</Text>
+      <ModalDropdown
+          options={dailyDuration.map((item) => item.label)}
+          style={DailyReminderStyle.customButtonDrop}
+          defaultValue={selectedDailyDuration !== null ? String(selectedDailyDuration) : "Select Duration"} 
+          onSelect={selectDailyDuration}
+          textStyle={DailyReminderStyle.dropdownText}
+          dropdownStyle={DailyReminderStyle.dropdownContainer}
+          defaultIndex={1}
+        />
+
+</View>
      
-
-
-
-     
-      <View style={styles.rowContainer}>
+      <View style={DailyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={DailyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartDatePicker}>
-      <Text style={styles.customButtonText}>Start Date </Text>
+            <TouchableHighlight style={DailyReminderStyle.customButton} onPress={showStartDatePicker}>
+      <Text style={DailyReminderStyle.customButtonText}>Start Date </Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndDatePicker}>
-      <Text style={styles.customButtonText}>End Date </Text>
+            <TouchableHighlight style={DailyReminderStyle.customButton} onPress={showEndDatePicker}>
+      <Text style={DailyReminderStyle.customButtonText}>End Date </Text>
     </TouchableHighlight>
           </View>
         </View>
         
       </View>
-      <View style={styles.rowContainer}>
+      <View style={DailyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-        <View style={styles.pickerContainer}>
+        <View style={DailyReminderStyle.pickerContainer}>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showStartTimePicker}>
-      <Text style={styles.customButtonText}>Start Time</Text>
+            <TouchableHighlight style={DailyReminderStyle.customButton} onPress={showStartTimePicker}>
+      <Text style={DailyReminderStyle.customButtonText}>Start Time</Text>
     </TouchableHighlight>
           </View>
           <View>
-            <TouchableHighlight style={styles.customButton} onPress={showEndTimePicker}>
-      <Text style={styles.customButtonText}>End Time</Text>
+            <TouchableHighlight style={DailyReminderStyle.customButton} onPress={showEndTimePicker}>
+      <Text style={DailyReminderStyle.customButtonText}>End Time</Text>
     </TouchableHighlight>
           </View>
         </View>
         
       </View>
-    
-      {renderHourMinuteInputs()}
+ 
+          {renderHourMinuteInputs()}
 
-
-<TouchableOpacity style={styles.customButtonDone} onPress={setReminder}>
-  <Text style={{...styles.customButtonText,fontWeight:"bold"}}>Done</Text>
+<TouchableOpacity style={DailyReminderStyle.customButtonDone} onPress={setReminder}>
+  <Text style={{...DailyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
 
 <Modal
@@ -332,22 +392,19 @@ const handleDateConfirm = (date, isStartDate) => {
         transparent={true}
         visible={isModalVisible}
         onRequestClose={() => {
-          setModalVisible(false);
+          toggleModal();
         }}
       >
-        <View style={styles.modalContainer}>
-          <ScrollView>
-
-          <Text style={styles.modalTitle}>Intervals:</Text>
+        <View style={DailyReminderStyle.modalContainer}>
+          <ScrollView style={DailyReminderStyle.modalContent}>
+            <Text style={DailyReminderStyle.modalTitle}>Intervals:</Text>
             {intervals.map((interval, index) => (
-              <Text key={index} style={styles.modalText}>{`${interval.date} - ${interval.time}`}</Text>
-              ))}
+              <Text key={index} style={DailyReminderStyle.modalText}>{`${interval.date} - ${interval.time}`}</Text>
+            ))}
           </ScrollView>
-
-          <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-            <Text style={{ color: 'white' }}>Close</Text>
+          <TouchableOpacity style={DailyReminderStyle.modalButton} onPress={toggleModal}>
+            <Text style={DailyReminderStyle.modalButtonText}>Close</Text>
           </TouchableOpacity>
-          
         </View>
       </Modal>
       <DateTimePickerModal
@@ -357,7 +414,8 @@ const handleDateConfirm = (date, isStartDate) => {
   onCancel={hideStartDatePicker}
   date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
 />
-      <DateTimePickerModal
+
+<DateTimePickerModal
   isVisible={isEndDatePickerVisible}
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, false)}
@@ -384,172 +442,3 @@ const handleDateConfirm = (date, isStartDate) => {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 14,
-    margin: 8,
-  },
- 
-  title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: 'black',
-  },
-  text: {
-    marginBottom: 8,
-    color: 'black',
-  },
-
-  dropdownContainer: {
-    height: 40,
-color:"red",
-    marginBottom: 8,
-    width: "30%",
-    marginLeft: "45%",
-    marginTop: "3%",
-
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-
-  modalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-
-  closeButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginLeft: "20%",
-    marginTop: "7%",
-    
-  },
-  monthChooser: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    
-
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    // alignItems: 'center',
-    justifyContent: 'space-between',
-    
-   
-    // Add more styles as needed
-  },
- 
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 10,
-    zIndex: 1, // Ensure it's above other components
-  },
-  monthText: {
-    textAlign: 'center',
-    color: 'black',
-  },
-  weekOption: {
-    width: '12%',
-  marginTop:"10%",
-  
-   padding:"1%",
-    borderWidth: 1,
-    borderColor: 'black',
-    
-  },
-  dropdownContainer: {
-    width: 120,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-  },
-  dropdownText: {
-    fontSize: 16,
-    padding: "auto",
-  },
-  customButton: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 5,
-    margin:"3%",
-
-    
-  },
-  customButtonDrop: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    width:125,
-    height:40,
-    marginTop:"5%",
-    padding:"2%"
-  },
-  customButtonText: {
-    color: 'black',
-    textAlign: 'center',
-  },
-  
-  optionContainer: {
-    flexDirection: 'row',
-    marginTop: 36,
-    
-    
-  },
-  option: {
-    width: 20,
-    height: 20,
-    borderRadius: 50,
-    backgroundColor: 'gray',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin:3,
-    marginLeft:5,
-    marginRight:15
-  },
- 
-
-
-  customButtonDone: {
-    backgroundColor: 'white',
-    borderColor: 'black',
-    borderWidth: 1,
-    padding: 10,
-    marginTop:"90%",
-    
-    
-    backgroundColor:"gray",
-    
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'black',
-    width: 80,
-    height:40, 
-    textAlign: 'center',
-  },
-  selectedMonthOption: {
-    backgroundColor: 'blue',
-  },
-});
-
