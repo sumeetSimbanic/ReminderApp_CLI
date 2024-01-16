@@ -143,12 +143,48 @@ const handleDateConfirm = (date, isStartDate) => {
     setEndTimePickerVisibility(false);
   };
 
+
+  const showStartDatePicker = () => {
+    setStartDatePickerVisible(true);
+  };
+  
+ const showEndDatePicker = () => {
+  if (selectedStartDate) {
+    setEndDatePickerVisible(true);
+  } else {
+    Alert.alert(
+      'Error',
+      'Please select a start date first',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ]
+    );
+  }
+};
+
+const isPastDate = (date) => {
+  const currentDate = new Date();
+  return date < currentDate;
+};
+  const showStartTimePicker = () => {
+    setStartTimePickerVisibility(true);
+  };
+  
+  const showEndTimePicker = () => {
+    setEndTimePickerVisibility(true);
+  };
+  
+
+
+  
   const setReminder = () => {
     if (
       selectedStartDate &&
       selectedStartTime &&
-      hour &&
-      minute
+      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0))
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -167,11 +203,11 @@ const handleDateConfirm = (date, isStartDate) => {
             selectedEndTime.getHours(),
             selectedEndTime.getMinutes()
           )
-        : new Date(startDateTime);
+        : new Date(startDateTime.getTime() + 60 * 60 * 1000); // Default to 1 hour later
   
       // Check if the end date is later than the start date
       if (endDateTime < startDateTime) {
-        console.warn('End date & time must be later than start date & time ');
+        console.warn('End date & time must be later than start date & time');
         return; // Exit the function if the validation fails
       }
   
@@ -205,33 +241,19 @@ const handleDateConfirm = (date, isStartDate) => {
     } else {
       Alert.alert(
         'Error',
-        'Incomplete data to set Reminder',
+        'Please select a start date, end date, start time, and ensure the reminder duration is greater than zero',
         [
           {
             text: 'OK',
-            onPress: () => {
-              // Reopen the end date picker to set the correct end date
-              // reopenEndDatePicker(); // Reopen end date picker
-            },
+            onPress: () => {},
           },
         ]
-      );    }
-  };
-  const showStartDatePicker = () => {
-    setStartDatePickerVisible(true);
-  };
-  
-  const showEndDatePicker = () => {
-    setEndDatePickerVisible(true);
+      );
+      console.log('Incomplete or invalid data to set Reminder');
+    }
   };
   
-  const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
-  };
   
-  const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
-  };
   
   const renderHourMinuteInputs = () => {
     if (isEndTimeSelected) {
@@ -282,11 +304,6 @@ const handleDateConfirm = (date, isStartDate) => {
 </View>
       <Text style={HourlyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={HourlyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
-     
-
-
-
-     
       <View style={HourlyReminderStyle.rowContainer}>
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
         <View style={HourlyReminderStyle.pickerContainer}>
@@ -355,15 +372,19 @@ const handleDateConfirm = (date, isStartDate) => {
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, true)}
   onCancel={hideStartDatePicker}
-  date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+  minimumDate={new Date()} // Disable past dates for start date picker
+  date={selectedStartDate || new Date()}
 />
-      <DateTimePickerModal
+
+<DateTimePickerModal
   isVisible={isEndDatePickerVisible}
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, false)}
   onCancel={hideEndDatePicker}
-  date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+  minimumDate={selectedStartDate || new Date()} // Disable past dates and set minimum date for end date picker
+  date={selectedEndDate || new Date()}
 />
+
 
 <DateTimePickerModal
   isVisible={isStartTimePickerVisible}

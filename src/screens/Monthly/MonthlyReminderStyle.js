@@ -14,7 +14,15 @@ const MonthlyReminderStyle = StyleSheet.create({
       marginBottom: 8,
       color: 'black',
     },
-  
+    inputField: {
+      width: '40%',
+      borderWidth: 1,
+      borderRadius: 5,
+      padding: "1%",
+      marginTop: 20,
+      backgroundColor: 'white',
+      borderColor: 'black',
+    },
     dropdownContainer: {
       height: 40,
   color:"red",

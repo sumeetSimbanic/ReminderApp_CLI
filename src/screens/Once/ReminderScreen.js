@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useIsFocused } from '@react-navigation/native';
 import ReminderScreenStyle from './ReminderScreenStyle'; 
 
+
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 
@@ -68,9 +69,6 @@ export default function ReminderScreen({navigation,route}) {
             data.push({ id: item.id, title: item.title, note: item.note, date: new Date(item.date) });
           }
           setReminders(data);
-
-          
-          console.log('All reminders in the database:', data);
         },
         (error) => {
           console.log('Error fetching reminders:', error);
@@ -78,6 +76,7 @@ export default function ReminderScreen({navigation,route}) {
       );
     });
   };
+  
 
 
 useEffect(()=>{
@@ -94,13 +93,19 @@ const createChannels = () =>{
 
 }
 
+// In the ReminderScreen component
+
 useEffect(() => {
   if (isFocused) {
     if (route.params && route.params.reminderId) {
-      // Editing an existing reminder
       const reminderId = route.params.reminderId;
+      console.log('Reminder ID from navigation params:', reminderId);
+
       const reminderIndex = reminders.findIndex((reminder) => reminder.id === reminderId);
       const reminderToEdit = reminders.find((reminder) => reminder.id === reminderId);
+
+      console.log('Reminder Index:', reminderIndex);
+      console.log('Reminder to edit:', reminderToEdit);
 
       if (reminderToEdit) {
         setInputText(reminderToEdit.title);
@@ -118,40 +123,16 @@ useEffect(() => {
       setIsEditing(false);
       setEditingIndex(null);
     }
+
+    // Check for the callback and execute it
+    if (route.params && route.params.onEditComplete) {
+      route.params.onEditComplete();
+    }
   }
 }, [isFocused, route.params, reminders]);
 
-useEffect(() => {
-  if (route.params && route.params.reminderId) {
-    const reminderId = route.params.reminderId;
-    console.log('Reminder ID:', reminderId);
-    console.log('Reminders:', reminders);
-    const reminderIndex = reminders.findIndex((reminder) => reminder.id === reminderId);
 
-    const reminderToEdit = reminders.find((reminder) => reminder.id === reminderId);
-    console.log('Reminder to Edit:', reminderToEdit);
 
-    if (reminderToEdit) {
-      console.log(reminderIndex,"kkk")
-      setInputText(reminderToEdit.title);
-      setNoteText(reminderToEdit.note);
-      setSelectedDate(reminderToEdit.date);
-      setSelectedTime(reminderToEdit.date); 
-      setIsEditing(true);
-      setEditingIndex(reminderIndex)
-    }
-  }
-}, [route.params, reminders]);
-const editReminder = (index) => {
-  const reminderToEdit = reminders[index];
-  setInputText(reminderToEdit.title);
-  setNoteText(reminderToEdit.note);
-  setSelectedDate(reminderToEdit.date);
-  setSelectedTime(reminderToEdit.date);
-  setIsEditing(true);
-  setEditingIndex(index);
-};
-  
   const setUpcomingDate = () => {
     setDatePickerVisible(true);
   };
@@ -187,7 +168,6 @@ const editReminder = (index) => {
   const hideDatePicker = () => {
     setDatePickerVisible(false);
   };
-
   const addReminder = () => {
     if (!inputText) {
       setErrorMessage('Please enter a title for the reminder.');
@@ -201,8 +181,6 @@ const editReminder = (index) => {
         dateTime.setMinutes(selectedTime.getMinutes());
   
         if (isEditing) {
-          console.log(editingIndex)
-          console.log(reminders[editingIndex])
           const updatedReminder = {
             id: reminders[editingIndex].id,
             date: dateTime,
@@ -217,6 +195,7 @@ const editReminder = (index) => {
               (tx, result) => {
                 console.log('Reminder updated successfully');
                 fetchRemindersFromDB(); // Fetch updated reminders
+                navigateToList(); // Navigate only after successful update
               },
               (error) => {
                 console.log('Error updating reminder:', error);
@@ -227,16 +206,10 @@ const editReminder = (index) => {
           setIsEditing(false); // Reset the editing flag
         } else {
           // Adding a new reminder
-          console.log("input",inputText)
-          console.log("note",noteText)
-          console.log("date",dateTime)
-
-
           db.transaction((tx) => {
             tx.executeSql(
               'INSERT INTO reminders (title, note, date) VALUES (?, ?, ?)',
               [inputText, noteText, dateTime.getTime()],
-              
               (tx, result) => {
                 console.log('Reminder added successfully');
                 PushNotification.localNotificationSchedule({
@@ -245,8 +218,8 @@ const editReminder = (index) => {
                   message: noteText,
                   date: dateTime,
                 });
-
-                // fetchRemindersFromDB(); // Fetch updated reminders
+                fetchRemindersFromDB(); // Fetch updated reminders
+                navigateToList(); // Navigate only after successful insertion
               },
               (error) => {
                 console.log('Error adding reminder:', error);
@@ -254,8 +227,7 @@ const editReminder = (index) => {
             );
           });
         }
-        navigation.navigate('OnceListing');
-
+  
         // Reset all fields to their initial state
         setNoteText('');
         setInputText('');
@@ -351,9 +323,11 @@ const editReminder = (index) => {
   const navigateToList = () => {
     navigation.navigate('OnceListing');
   };
+ 
   return (
     <View>
-              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text>List</Text></TouchableHighlight>
+              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text>LISTS</Text></TouchableHighlight>
+              {/* <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToRepeatList}><Text>Repeat</Text></TouchableHighlight> */}
 
       <ScrollView contentContainerStyle={ReminderScreenStyle.container}>
         <Text style={ReminderScreenStyle.heading}>ReminderScreen</Text>

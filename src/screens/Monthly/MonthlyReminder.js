@@ -64,13 +64,7 @@ export default function MonthlyReminder({navigation}) {
     { label: '3', value: '3' },
     { label: '4', value: '4' },
     { label: '5', value: '5' },
-    { label: '6', value: '6' },
-    { label: '7', value: '7' },
-    { label: '8', value: '8' },
-    { label: '9', value: '9' },
-    { label: '10', value: '10' },
-    { label: '11', value: '11' },
-    { label: '12', value: '12' },
+   
   ];
   const weekDuration = [
     { label: '1', value: '1' },
@@ -107,7 +101,6 @@ export default function MonthlyReminder({navigation}) {
         'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT);',
         [],
         (tx, result) => {
-          console.log('repeatreminder table created successfully');
         },
         (error) => {
           console.error('Error creating repeatreminder table:', error);
@@ -293,6 +286,14 @@ export default function MonthlyReminder({navigation}) {
         // Filter intervals for every 3 months
         return filterIntervalsByGap(intervals, 3);
       // Add more cases for other durations as needed
+      case '4':
+        // Filter intervals for every 3 months
+        return filterIntervalsByGap(intervals, 4);
+      // Add more cases for other durations as needed
+      case '5':
+        // Filter intervals for every 3 months
+        return filterIntervalsByGap(intervals, 5);
+      // Add more cases for other durations as needed
       default:
         return intervals;
     }
@@ -407,7 +408,7 @@ export default function MonthlyReminder({navigation}) {
       const startTimestamp = startDateTime.getTime();
 const endTimestamp = endDateTime.getTime();
 
-      navigation.navigate('Details', {
+      navigation.navigate('OnceListing', {
         startDateTime: startDateTime,
         endDateTime: endDateTime,
         selectedStartTime: selectedStartTime,
@@ -497,22 +498,22 @@ const endTimestamp = endDateTime.getTime();
           }
         );
       });
-      setIntervals(filteredIntervals);
+      setIntervals("week",filteredIntervals);
       toggleModal();
       logRepeatReminderData();
       createRepeatReminderTable();
 
-      navigation.navigate('Details', {
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        selectedStartTime: selectedStartTime,
-        selectedEndTime: selectedEndTime,
-        hour: hour,
-        minute: minute,
-        selectedDuration: selectedDuration,
-        selectedWeeks: selectedWeeks,
-        selectedDates: selectedDates,
-        filteredIntervals: filteredIntervals,
+      navigation.navigate('OnceListing', {
+        // startDateTime: startDateTime,
+        // endDateTime: endDateTime,
+        // selectedStartTime: selectedStartTime,
+        // selectedEndTime: selectedEndTime,
+        // hour: hour,
+        // minute: minute,
+        // selectedDuration: selectedDuration,
+        // selectedWeeks: selectedWeeks,
+        // selectedDates: selectedDates,
+        // filteredIntervals: filteredIntervals,
       });
     } else {
       Alert.alert(
@@ -766,7 +767,7 @@ Alert.alert(
       );  }
 }}>
   <Text style={{...MonthlyReminderStyle.customButtonText, fontWeight: "bold"}}>Done</Text>
-  <Modal
+  {/* <Modal
         animationType="slide"
         transparent={true}
         visible={isNewModalVisible}
@@ -786,7 +787,7 @@ Alert.alert(
             <Text style={MonthlyReminderStyle.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal> */}
 </TouchableOpacity>
 
 

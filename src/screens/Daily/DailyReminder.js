@@ -11,7 +11,7 @@ export default function DailyReminder({ navigation }) {
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
-  const [selectedDailyDuration, setSelectedDailyDuration] = useState(null);
+  const [selectedDailyDuration, setSelectedDailyDuration] = useState(1);
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
 
   const [hour, setHour] = useState('');
@@ -167,10 +167,23 @@ const handleDateConfirm = (date, isStartDate) => {
     setStartDatePickerVisible(true);
   };
   
-  const showEndDatePicker = () => {
+ const showEndDatePicker = () => {
+  if (selectedStartDate) {
     setEndDatePickerVisible(true);
-  };
-  
+  } else {
+    Alert.alert(
+      'Error',
+      'Please select a start date first',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ]
+    );
+  }
+};
+
   const showStartTimePicker = () => {
     setStartTimePickerVisibility(true);
   };
@@ -197,9 +210,13 @@ const handleDateConfirm = (date, isStartDate) => {
     if (
       selectedStartDate &&
       selectedStartTime &&
+     
+      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0))  &&
+
+      selectedEndTime &&
       hour &&
-      minute &&
-      selectedDailyDuration
+      minute 
+      
     ) {
       let endDate = selectedStartDate; // Default end date to start date
       let endTime = selectedStartTime; // Default end time to start time
@@ -260,14 +277,14 @@ const handleDateConfirm = (date, isStartDate) => {
         currentDateTime.setDate(currentDateTime.getDate() + dailyDurationInDays);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-      navigateToDetailScreen(); // Navigate to DetailScreen
+      // navigateToDetailScreen(); // Navigate to DetailScreen
 
       setIntervals(calculatedIntervals);
       toggleModal();
     } else {
       Alert.alert(
         'Error',
-        'Incomplete data to set Reminder',
+        'Please fill in all fields and ensure the reminder duration is greater than zero',
         [
           {
             text: 'OK',
@@ -412,7 +429,8 @@ const handleDateConfirm = (date, isStartDate) => {
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, true)}
   onCancel={hideStartDatePicker}
-  date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
+  minimumDate={new Date()} // Disable past dates for start date picker
+  date={selectedStartDate || new Date()}
 />
 
 <DateTimePickerModal
@@ -420,25 +438,24 @@ const handleDateConfirm = (date, isStartDate) => {
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, false)}
   onCancel={hideEndDatePicker}
-  date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
+  minimumDate={selectedStartDate || new Date()} // Disable past dates and set minimum date for end date picker
+  date={selectedEndDate || new Date()}
 />
-
 <DateTimePickerModal
-  isVisible={isStartTimePickerVisible}
-  mode="time"
-  onConfirm={handleStartTimeConfirm}
-  onCancel={hideStartTimePicker}
-  date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
-/>
-
-<DateTimePickerModal
-  isVisible={isEndTimePickerVisible}
-  mode="time"
-  onConfirm={handleEndTimeConfirm}
-  onCancel={hideEndTimePicker}
-  date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
-/>
-
+    isVisible={isStartTimePickerVisible}
+    mode="time"
+    onConfirm={handleStartTimeConfirm}
+    onCancel={hideStartTimePicker}
+    date={selectedStartTime || new Date()} // Use selectedStartTime as the default value
+  />
+  
+  <DateTimePickerModal
+    isVisible={isEndTimePickerVisible}
+    mode="time"
+    onConfirm={handleEndTimeConfirm}
+    onCancel={hideEndTimePicker}
+    date={selectedEndTime || new Date()} // Use selectedEndTime as the default value
+  />
     </View>
   );
 }

@@ -132,10 +132,23 @@ export default function WeeklyReminder({ navigation }) {
     setStartDatePickerVisible(true);
   };
   
+ 
   const showEndDatePicker = () => {
-    setEndDatePickerVisible(true);
+    if (selectedStartDate) {
+      setEndDatePickerVisible(true);
+    } else {
+      Alert.alert(
+        'Error',
+        'Please select a start date first',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+          },
+        ]
+      );
+    }
   };
-  
   const showStartTimePicker = () => {
     setStartTimePickerVisibility(true);
   };

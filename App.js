@@ -10,6 +10,7 @@ import YearlyReminder from './src/screens/Yearly/YearlyReminder';
 import PushNotification from 'react-native-push-notification';
 import DetailScreen from './src/screens/Detail/DetailScreen';
 import OnceListing from './src/screens/Listing/OnceListing';
+import RepeatListing from './src/screens/Listing/RepeatListing';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ const App = () => {
         <Stack.Screen name="Monthly" component={MonthlyReminder} />
         <Stack.Screen name="Yearly" component={YearlyReminder} />
         <Stack.Screen name="OnceListing" component={OnceListing} />
+        <Stack.Screen name="RepeatListing" component={RepeatListing} />
 
         <Stack.Screen name="Details" component={DetailScreen}/>
       </Stack.Navigator>
