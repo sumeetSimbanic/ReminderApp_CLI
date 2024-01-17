@@ -123,7 +123,7 @@ const DailyReminderStyle = StyleSheet.create({
       borderColor: 'black',
       borderWidth: 1,
       padding: 10,
-      marginTop:"90%",
+      marginTop:"50%",
       
       
       backgroundColor:"gray",

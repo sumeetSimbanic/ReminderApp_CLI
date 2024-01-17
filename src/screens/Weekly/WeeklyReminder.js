@@ -3,8 +3,11 @@ import { View, Text, TouchableHighlight, TouchableOpacity,TextInput,Modal,Scroll
 import ModalDropdown from 'react-native-modal-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import WeeklyReminderStyle from './WeeklyReminderStyle';
+import SQLite from 'react-native-sqlite-storage';
 
-
+import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
+import ReminderScreenStyle from '../Once/ReminderScreenStyle';
+const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 export default function WeeklyReminder({ navigation }) {
 
@@ -16,9 +19,10 @@ export default function WeeklyReminder({ navigation }) {
   const [selectedDuration, setSelectedDuration] = useState('');
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
 
-
-  const [hour, setHour] = useState('');
-  const [minute, setMinute] = useState('');
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
+  const [hour, setHour] = useState('1');
+  const [minute, setMinute] = useState('0');
 
   const [selectedWeeks, setSelectedWeeks] = useState([]);
   const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
@@ -171,7 +175,22 @@ export default function WeeklyReminder({ navigation }) {
   const hideEndTimePicker = () => {
     setEndTimePickerVisibility(false);
   };
+  const createRepeatReminderTable = () => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT, title TEXT, notes TEXT, category TEXT DEFAULT "Monthly" );',
+        [],
+        (tx, result) => {
+          console.log('repeatreminder table created successfully');
+        },
+        error => {
+          console.error('Error creating repeatreminder table:', error);
+        },
+      );
+    });
+  };
 
+  createRepeatReminderTable();
  
   const handleHourChange = (text) => {
     const numericValue = parseInt(text, 10);
@@ -208,7 +227,9 @@ export default function WeeklyReminder({ navigation }) {
       hour &&
       minute &&
       selectedWeekDuration &&
-      selectedWeeks.length > 0
+      selectedWeeks.length > 0 &&
+      title.trim() !== ''
+
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -256,15 +277,41 @@ export default function WeeklyReminder({ navigation }) {
         currentDateTime.setDate(currentDateTime.getDate() + 1); // Move to the next day
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            startDateTime.toString(),
+            endDateTime.toString(),
+            selectedStartTime.toLocaleTimeString(),
+            selectedEndTime.toLocaleTimeString(),
+            hour,
+            minute,
+            selectedDuration,
+            JSON.stringify(selectedWeeks),
+            JSON.stringify(filteredIntervals),
+            title,
+            notes,
+            'Weekly', // Assuming this is a weekly reminder, adjust accordingly
+          ],
+          (tx, result) => {
+            console.log('Reminder inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
       console.log('Intervals:', intervals);
       const filteredIntervals = filterIntervalsByDuration(intervals, selectedDuration);
 
       setIntervals(filteredIntervals);
       toggleModal();
+      createRepeatReminderTable();
 
       console.log('Filtered Intervals:', filteredIntervals);
-
+      navigation.navigate('OnceListing');
+      
     } else {
       Alert.alert(
         'Error',
@@ -388,6 +435,24 @@ export default function WeeklyReminder({ navigation }) {
 <Text style={WeeklyReminderStyle.text}>Repeat every at interval of every {selectedWeekDuration || "_"} week</Text>
       <Text style={WeeklyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={WeeklyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <View style={MonthlyReminderStyle.rowContainer}>
+<Text style={{ color: 'black', marginTop: '5%' }}>Title:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter input text"
+          onChangeText={(text) => setTitle(text)}
+          value={title}
+        />
+      </View>
+      <View style={MonthlyReminderStyle.rowContainer}>
+        <Text style={{ color: 'black', marginTop: '5%' }}>Notes:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter notes"
+          onChangeText={(text) => setNotes(text)}
+          value={notes}
+        />
+      </View>
       <View style={WeeklyReminderStyle.rowContainer}>
       <Text style={{ color: 'black', paddingTop: '5%' }}>WEEKS:</Text>
 
@@ -485,7 +550,7 @@ export default function WeeklyReminder({ navigation }) {
 <TouchableOpacity style={WeeklyReminderStyle.customButtonDone} onPress={setReminder}>
   <Text style={{...WeeklyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
-<Modal
+{/* <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
@@ -504,7 +569,7 @@ export default function WeeklyReminder({ navigation }) {
             <Text style={WeeklyReminderStyle.modalButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal> */}
       
 
       <DateTimePickerModal

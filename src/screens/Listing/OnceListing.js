@@ -5,6 +5,7 @@ import {
   TouchableHighlight,
   ScrollView,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { format } from 'date-fns'; // Import date-fns library for date formatting
 
@@ -21,6 +22,8 @@ const OnceListing = ({ route }) => {
   const [showEdit, setShowEdit] = useState(true);
   const [isOnceReminder, setIsOnceReminder] = useState(true);
   const navigation = useNavigation();
+  const [showOnceReminders, setShowOnceReminders] = useState(true); // Updated state
+  const [showRepeatReminders, setShowRepeatReminders] = useState(false); // Updated state
 
   useEffect(() => {
     fetchUpdatedReminders();
@@ -79,13 +82,15 @@ const OnceListing = ({ route }) => {
               date: new Date(item.date),
             });
           }
+          // Sort once reminders by ID in descending order
+          data.sort((a, b) => b.id - a.id);
           setOnceReminders(data);
         },
         (error) => {
           console.log('Error fetching once reminders:', error);
         }
       );
-  
+
       tx.executeSql(
         'SELECT * FROM repeatreminder',
         [],
@@ -95,6 +100,9 @@ const OnceListing = ({ route }) => {
             const item = result.rows.item(i);
             data.push({
               id: item.id,
+              title: item.title,
+              notes: item.notes,
+              category: item.category,
               startDateTime: item.startDateTime,
               endDateTime: item.endDateTime,
               selectedStartTime: item.selectedStartTime,
@@ -107,6 +115,8 @@ const OnceListing = ({ route }) => {
               filteredIntervals: JSON.parse(item.filteredIntervals),
             });
           }
+          // Sort repeat reminders by ID in descending order
+          data.sort((a, b) => b.id - a.id);
           setRepeatReminders(data);
           console.log('Repeat Reminders:', data); // Log the specific fields
         },
@@ -116,22 +126,25 @@ const OnceListing = ({ route }) => {
       );
     });
   };
-  
+
   const formatDate = (dateTimeString) => {
     const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
     const date = new Date(dateTimeString);
     const formattedDate = date.toLocaleDateString(undefined, options);
     return formattedDate;
   };
+
   const navigateToMainScreen = () => {
     setOnceReminders([]);
     setRepeatReminders([]);
     setShowEdit(false);
     navigation.navigate('Home');
   };
-const navigateToDetailScreen = (id) =>{
-  navigation.navigate('Details',{ reminderId: id })
-}
+
+  const navigateToDetailScreen = (id) => {
+    navigation.navigate('Details', { reminderId: id });
+  };
+
   const renderOnceReminders = () => {
     return onceReminders.map((item) => (
       <View key={item.id} style={ListingStyle.singleReminder}>
@@ -147,21 +160,21 @@ const navigateToDetailScreen = (id) =>{
             <Text style={ListingStyle.deleteButton}>Delete</Text>
           </TouchableHighlight>
         </View>
-        <View style={ListingStyle.divider} />
       </View>
     ));
   };
 
   const renderRepeatReminders = () => {
     return repeatReminders.map((item) => (
-      <View key={item.id} style={ListingStyle.singleReminder} >
+      <View key={item.id} style={ListingStyle.singleReminder}>
         <TouchableHighlight onPress={() => navigateToDetailScreen(item.id)}>
           <View>
-        <Text>ID: {item.id}</Text>
-        <Text>Date:{formatDate(item.startDateTime)} to {formatDate(item.endDateTime)}</Text>
-
-        <Text>Time: {item.selectedStartTime} to {item.selectedEndTime} </Text>
-        </View>
+            <Text>Title: {item.title}</Text>
+            <Text>Notes: {item.notes}</Text>
+            <Text>Category: {item.category}</Text>
+            <Text>Date:{formatDate(item.startDateTime)} to {formatDate(item.endDateTime)}</Text>
+            <Text>Time: {item.selectedStartTime} to {item.selectedEndTime} </Text>
+          </View>
         </TouchableHighlight>
         <View style={ListingStyle.buttonContainer}>
           <TouchableHighlight onPress={() => editRepeatReminder(item.id)}>
@@ -171,42 +184,58 @@ const navigateToDetailScreen = (id) =>{
             <Text style={ListingStyle.deleteButton}>Delete</Text>
           </TouchableHighlight>
         </View>
-        <View style={ListingStyle.divider} />
       </View>
     ));
   };
-  
+
+  const toggleReminders = (type) => {
+    if (type === 'once') {
+      setShowOnceReminders(true);
+      setShowRepeatReminders(false);
+    } else if (type === 'repeat') {
+      setShowOnceReminders(false);
+      setShowRepeatReminders(true);
+    }
+  };
 
   const editReminder = (id) => {
     navigation.navigate('Home', { reminderId: id, onEditComplete: fetchUpdatedReminders });
   };
+
   const editRepeatReminder = (id) => {
     navigation.navigate('Monthly', { reminderId: id, onEditComplete: fetchUpdatedReminders });
   };
 
   return (
-    <View style={ListingStyle.container}>
-      <View style={ListingStyle.headerContainer}>
-        <TouchableHighlight onPress={navigateToMainScreen}>
-          <Text>Back</Text>
-        </TouchableHighlight>
-        <Text style={ListingStyle.title}>REMINDERS</Text>
-        <TouchableHighlight onPress={() => setIsOnceReminder(!isOnceReminder)}>
-          <Text>{isOnceReminder ? 'Show Repeat Reminders' : 'Show Once Reminders'}</Text>
-        </TouchableHighlight>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={ListingStyle.container}>
+        <View style={ListingStyle.headerContainer}>
+          <TouchableHighlight onPress={navigateToMainScreen}>
+            <Text>Back</Text>
+          </TouchableHighlight>
+          <Text style={ListingStyle.title}>REMINDERS</Text>
+          <TouchableHighlight onPress={navigateToMainScreen}>
+            <Text>Add</Text>
+          </TouchableHighlight>
+        </View>
+        <View style={ListingStyle.tabToggleContainer}>
+          <TouchableHighlight onPress={() => toggleReminders('once')}>
+            <Text style={showOnceReminders ? ListingStyle.activeTab : ListingStyle.inactiveTab}>
+              Once Reminders
+            </Text>
+          </TouchableHighlight>
+          <TouchableHighlight onPress={() => toggleReminders('repeat')}>
+            <Text style={showRepeatReminders ? ListingStyle.activeTab : ListingStyle.inactiveTab}>
+              Repeat Reminders
+            </Text>
+          </TouchableHighlight>
+        </View>
+        <ScrollView style={ListingStyle.reminderContainer}>
+          {showOnceReminders && renderOnceReminders()}
+          {showRepeatReminders && renderRepeatReminders()}
+        </ScrollView>
       </View>
-      <ScrollView>
-        {isOnceReminder ? (
-          <View style={ListingStyle.reminderContainer}>
-            {renderOnceReminders()}
-          </View>
-        ) : (
-          <View style={ListingStyle.reminderContainer}>
-            {renderRepeatReminders()}
-          </View>
-        )}
-      </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

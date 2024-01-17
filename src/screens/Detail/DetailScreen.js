@@ -31,6 +31,9 @@ const DetailScreen = ({ route }) => {
             const item = result.rows.item(0);
             setRepeatReminder({
               id: item.id,
+              title:item.title,
+              notes:item.notes,
+              category:item.category,
               startDateTime: item.startDateTime,
               endDateTime: item.endDateTime,
               selectedStartTime: item.selectedStartTime,
@@ -96,23 +99,18 @@ const DetailScreen = ({ route }) => {
     navigation.navigate('OnceListing');
   };
   return (
-    // <Vi style={DetailScreenStyle.container}>
-    //   <Text style={DetailScreenStyle.title}>Reminder Detail</Text>
-    //   <View style={DetailScreenStyle.detailContainer}>
-    //     <Text>ID: {repeatReminder.id}</Text>
-    //     <Text>Date: {formatDate(repeatReminder.startDateTime)} to {formatDate(repeatReminder.endDateTime)}</Text>
-    //     <Text>Time: {repeatReminder.selectedStartTime} to {repeatReminder.selectedEndTime}</Text>
-    //     {/* Render other details as needed */}
-    //   </View>
-    
+   
      
     
        <View style={DetailScreenStyle.container}>
      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-  <Text style={DetailScreenStyle.title}>Reminder Details</Text>
-  <TouchableHighlight onPress={navigateToListingScreen}>
+     <TouchableHighlight onPress={navigateToListingScreen}>
     <Text >Back</Text>
   </TouchableHighlight>
+  <Text style={DetailScreenStyle.title}>{repeatReminder.title}</Text>
+  <Text >{repeatReminder.category}</Text>
+
+  
 </View>
 
 
@@ -121,7 +119,7 @@ const DetailScreen = ({ route }) => {
       </View>
 
       <View style={DetailScreenStyle.detailContainer}>
-        <Text> Time: {repeatReminder.selectedStartTime} to {repeatReminder.selectedEndTime}</Text>
+        <Text>Time: {repeatReminder.selectedStartTime} to {repeatReminder.selectedEndTime}</Text>
       </View>
 
       <View style={DetailScreenStyle.detailContainer}>
@@ -142,11 +140,14 @@ const DetailScreen = ({ route }) => {
 
       <View style={DetailScreenStyle.detailContainer}>
       {repeatReminder.selectedDates && Object.keys(repeatReminder.selectedDates).length > 0 ? (
-    <Text>Chosen Dates: {Object.keys(repeatReminder.selectedDates).join(', ')}</Text>
+    <Text>CHOSEN DATES: {Object.keys(repeatReminder.selectedDates).join(', ')}</Text>
   ) : (
     <Text>No dates chosen</Text>
   )}   
      </View>
+     <View style={DetailScreenStyle.detailContainer}>
+        <Text>NOTES: {repeatReminder.notes} weeks</Text>
+      </View>
      <Button title="Show Intervals" onPress={() => setIntervalsModalVisible(true)} />
       
       <Modal

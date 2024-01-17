@@ -3,7 +3,11 @@ import { View, Text, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Mo
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DailyReminderStyle from './DailyReminderstyle';
 import ModalDropdown from 'react-native-modal-dropdown';
+import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
+import ReminderScreenStyle from '../Once/ReminderScreenStyle';
+import SQLite from 'react-native-sqlite-storage';
 
+const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 export default function DailyReminder({ navigation }) {
 
@@ -13,9 +17,10 @@ export default function DailyReminder({ navigation }) {
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [selectedDailyDuration, setSelectedDailyDuration] = useState(1);
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
-
-  const [hour, setHour] = useState('');
-  const [minute, setMinute] = useState('');
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
+  const [hour, setHour] = useState('1');
+  const [minute, setMinute] = useState('0');
 
   const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisibility] = useState(false);
@@ -183,7 +188,22 @@ const handleDateConfirm = (date, isStartDate) => {
     );
   }
 };
+const createRepeatReminderTable = () => {
+  db.transaction(tx => {
+    tx.executeSql(
+      'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT, title TEXT, notes TEXT, category TEXT DEFAULT "Monthly" );',
+      [],
+      (tx, result) => {
+        console.log('repeatreminder table created successfully');
+      },
+      error => {
+        console.error('Error creating repeatreminder table:', error);
+      },
+    );
+  });
+};
 
+createRepeatReminderTable();
   const showStartTimePicker = () => {
     setStartTimePickerVisibility(true);
   };
@@ -210,13 +230,11 @@ const handleDateConfirm = (date, isStartDate) => {
     if (
       selectedStartDate &&
       selectedStartTime &&
-     
-      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0))  &&
-
+      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0)) &&
       selectedEndTime &&
       hour &&
-      minute 
-      
+      minute &&
+      title.trim() !== ''
     ) {
       let endDate = selectedStartDate; // Default end date to start date
       let endTime = selectedStartTime; // Default end time to start time
@@ -277,10 +295,38 @@ const handleDateConfirm = (date, isStartDate) => {
         currentDateTime.setDate(currentDateTime.getDate() + dailyDurationInDays);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-      // navigateToDetailScreen(); // Navigate to DetailScreen
-
+  
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            startDateTime.toString(),
+            endDateTime.toString(),
+            selectedStartTime.toLocaleTimeString(),
+            endTime.toLocaleTimeString(),
+            hour,
+            minute,
+            selectedDailyDuration, // Daily reminder, so set a constant value for selectedDuration
+            JSON.stringify([]), // No weeks for daily reminder
+            JSON.stringify(calculatedIntervals),
+            title,
+            notes,
+            'Daily', // Set the constant value for the "category" column
+          ],
+          (tx, result) => {
+            console.log('Reminder inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
+  
       setIntervals(calculatedIntervals);
       toggleModal();
+      createRepeatReminderTable();
+
+      navigation.navigate('OnceListing');
     } else {
       Alert.alert(
         'Error',
@@ -351,6 +397,25 @@ const handleDateConfirm = (date, isStartDate) => {
 
       <Text style={DailyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={DailyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <View style={MonthlyReminderStyle.rowContainer}>
+<Text style={{ color: 'black', marginTop: '5%' }}>Title:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter input text"
+          onChangeText={(text) => setTitle(text)}
+          value={title}
+        />
+      </View>
+
+      <View style={MonthlyReminderStyle.rowContainer}>
+        <Text style={{ color: 'black', marginTop: '5%' }}>Notes:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter notes"
+          onChangeText={(text) => setNotes(text)}
+          value={notes}
+        />
+      </View>
       <View style={DailyReminderStyle.rowContainer}>
  <Text style={{ color: 'black', paddingTop: '5%' }}>DAILY EVERY:</Text>
       <ModalDropdown
@@ -404,26 +469,7 @@ const handleDateConfirm = (date, isStartDate) => {
   <Text style={{...DailyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
 
-<Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => {
-          toggleModal();
-        }}
-      >
-        <View style={DailyReminderStyle.modalContainer}>
-          <ScrollView style={DailyReminderStyle.modalContent}>
-            <Text style={DailyReminderStyle.modalTitle}>Intervals:</Text>
-            {intervals.map((interval, index) => (
-              <Text key={index} style={DailyReminderStyle.modalText}>{`${interval.date} - ${interval.time}`}</Text>
-            ))}
-          </ScrollView>
-          <TouchableOpacity style={DailyReminderStyle.modalButton} onPress={toggleModal}>
-            <Text style={DailyReminderStyle.modalButtonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+
       <DateTimePickerModal
   isVisible={isStartDatePickerVisible}
   mode="date"

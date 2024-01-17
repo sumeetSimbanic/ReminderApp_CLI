@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimension
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HourlyReminderStyle from './HourlyReminderStyle';
+import ReminderScreenStyle from '../Once/ReminderScreenStyle';
+import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 
 
 export default function HourlyReminder({ navigation }) {
@@ -14,6 +16,8 @@ export default function HourlyReminder({ navigation }) {
   const [isEndTimeSelected, setIsEndTimeSelected] = useState(false);
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisibility] = useState(false);
   const [selectedStartTime, setSelectedStartTime] = useState(new Date());
@@ -184,7 +188,9 @@ const isPastDate = (date) => {
     if (
       selectedStartDate &&
       selectedStartTime &&
-      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0))
+      (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0)) &&
+      title.trim() !== ''
+
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -304,7 +310,26 @@ const isPastDate = (date) => {
 </View>
       <Text style={HourlyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
       <Text style={HourlyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
+      <View style={MonthlyReminderStyle.rowContainer}>
+<Text style={{ color: 'black', marginTop: '5%' }}>Title:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter input text"
+          onChangeText={(text) => setTitle(text)}
+          value={title}
+        />
+      </View>
+      <View style={MonthlyReminderStyle.rowContainer}>
+        <Text style={{ color: 'black', marginTop: '5%' }}>Notes:</Text>
+        <TextInput
+          style={{...ReminderScreenStyle.inputField,width:"50%"}}
+          placeholder="Enter notes"
+          onChangeText={(text) => setNotes(text)}
+          value={notes}
+        />
+      </View>
       <View style={HourlyReminderStyle.rowContainer}>
+
         <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
         <View style={HourlyReminderStyle.pickerContainer}>
           <View>

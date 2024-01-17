@@ -326,7 +326,7 @@ useEffect(() => {
  
   return (
     <View>
-              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text>LISTS</Text></TouchableHighlight>
+              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text style={{padding:"1%"}}>LISTS</Text></TouchableHighlight>
               {/* <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToRepeatList}><Text>Repeat</Text></TouchableHighlight> */}
 
       <ScrollView contentContainerStyle={ReminderScreenStyle.container}>

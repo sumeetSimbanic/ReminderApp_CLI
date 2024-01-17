@@ -121,7 +121,7 @@ const WeeklyReminderStyle = StyleSheet.create({
       borderColor: 'black',
       borderWidth: 1,
       padding: 10,
-      marginTop:"75%",
+      marginTop:"30%",
       
       
       backgroundColor:"gray",
