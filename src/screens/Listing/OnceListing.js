@@ -11,12 +11,14 @@ import { format } from 'date-fns'; // Import date-fns library for date formattin
 
 import SQLite from 'react-native-sqlite-storage';
 import { useNavigation } from '@react-navigation/native';
+import PushNotification from 'react-native-push-notification';
 
 import ListingStyle from './ListingStyle';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 const OnceListing = ({ route }) => {
+
   const [onceReminders, setOnceReminders] = useState([]);
   const [repeatReminders, setRepeatReminders] = useState([]);
   const [showEdit, setShowEdit] = useState(true);
@@ -24,11 +26,42 @@ const OnceListing = ({ route }) => {
   const navigation = useNavigation();
   const [showOnceReminders, setShowOnceReminders] = useState(true); // Updated state
   const [showRepeatReminders, setShowRepeatReminders] = useState(false); // Updated state
-
+  
+  // useEffect(()=>{
+  //   createChannels();
+  // },[]);
+  
+  // const createChannels = () =>{
+  //   PushNotification.createChannel(
+  //     {
+  //       channelId:"test-channel",
+  //       channelName:"Test Channel"
+  //     }
+  //   )
+  
+  // }
   useEffect(() => {
     fetchUpdatedReminders();
   }, [isOnceReminder]);
-
+  const scheduleReminders = (reminders) => {
+    reminders.forEach((reminder) => {
+      const { id, title, note, date } = reminder;
+  
+      // Use the 'date' property to set the reminder time
+      const reminderTime = new Date(date).getTime(); // Convert date to timestamp
+  
+      PushNotification.localNotificationSchedule({
+        channelId: 'default',
+        title: title,
+        message: note,
+        date: new Date(reminderTime),
+        userInfo: { id: id }, // You can attach any additional data to identify the reminder
+      });
+  
+      console.log(`Notification scheduled successfully for reminder with ID ${id}`);
+    });
+  };
+  // Call the function with your once reminders data
   const deleteReminder = (id) => {
     Alert.alert(
       'Confirm Deletion',
@@ -81,10 +114,15 @@ const OnceListing = ({ route }) => {
               note: item.note,
               date: new Date(item.date),
             });
+
           }
           // Sort once reminders by ID in descending order
           data.sort((a, b) => b.id - a.id);
           setOnceReminders(data);
+          console.log("once reminder -- ",data)
+          scheduleReminders(onceReminders);
+
+
         },
         (error) => {
           console.log('Error fetching once reminders:', error);
@@ -118,7 +156,7 @@ const OnceListing = ({ route }) => {
           // Sort repeat reminders by ID in descending order
           data.sort((a, b) => b.id - a.id);
           setRepeatReminders(data);
-          console.log('Repeat Reminders:', data); // Log the specific fields
+          // console.log('Repeat Reminders:', data); // Log the specific fields
         },
         (error) => {
           console.log('Error fetching repeat reminders:', error);
@@ -197,13 +235,21 @@ const OnceListing = ({ route }) => {
       setShowRepeatReminders(true);
     }
   };
+  useEffect(() => {
+    // Check if the category is passed from the navigation
+    const { category } = route.params;
 
+    if (category === 'Repeat') {
+      // If the category is 'Repeat', toggle to the 'Repeat Reminders' tab
+      toggleReminders('repeat');
+    }
+  }, [route.params]);
   const editReminder = (id) => {
     navigation.navigate('Home', { reminderId: id, onEditComplete: fetchUpdatedReminders });
   };
 
   const editRepeatReminder = (id) => {
-    navigation.navigate('Monthly', { reminderId: id, onEditComplete: fetchUpdatedReminders });
+    navigation.navigate('Home', { reminderId: id, onEditComplete: fetchUpdatedReminders });
   };
 
   return (

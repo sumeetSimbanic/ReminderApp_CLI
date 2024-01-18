@@ -192,11 +192,17 @@ useEffect(() => {
             tx.executeSql(
               'UPDATE reminders SET title = ?, note = ?, date = ? WHERE id = ?',
               [updatedReminder.title, updatedReminder.note, updatedReminder.date.getTime(), updatedReminder.id],
-              (tx, result) => {
-                console.log('Reminder updated successfully');
-                fetchRemindersFromDB(); // Fetch updated reminders
-                navigateToList(); // Navigate only after successful update
-              },
+           (tx, result) => {
+              console.log('Reminder updated successfully');
+              PushNotification.localNotificationSchedule({
+                channelId: 'test-channel',
+                title: updatedReminder.title,
+                message: updatedReminder.note,
+                date: updatedReminder.date,
+              });
+              fetchRemindersFromDB(); // Fetch updated reminders
+              navigateToList(); // Navigate only after successful update
+            },
               (error) => {
                 console.log('Error updating reminder:', error);
               }
@@ -321,7 +327,7 @@ useEffect(() => {
   };
   
   const navigateToList = () => {
-    navigation.navigate('OnceListing');
+    navigation.navigate('OnceListing', { channel: 'test-channel' });
   };
  
   return (

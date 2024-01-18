@@ -310,8 +310,9 @@ export default function WeeklyReminder({ navigation }) {
       createRepeatReminderTable();
 
       console.log('Filtered Intervals:', filteredIntervals);
-      navigation.navigate('OnceListing');
-      
+      navigation.navigate('OnceListing', {
+        category: 'Repeat', 
+      });      
     } else {
       Alert.alert(
         'Error',

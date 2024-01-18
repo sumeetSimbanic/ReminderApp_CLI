@@ -426,8 +426,9 @@ export default function MonthlyReminder({navigation}) {
       const endTimestamp = endDateTime.getTime();
 
       navigation.navigate('OnceListing', {
-     
-      });
+        category: 'Repeat', 
+      });     
+      
     } else {
       console.warn('Incomplete data for calculation');
     }
@@ -538,7 +539,7 @@ export default function MonthlyReminder({navigation}) {
       createRepeatReminderTable();
 
       navigation.navigate('OnceListing', {
-      
+        category: 'Repeat', 
       });
     } else {
       Alert.alert('Error', 'Incomplete data to set Reminder', [

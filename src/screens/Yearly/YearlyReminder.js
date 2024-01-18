@@ -428,19 +428,9 @@ const [notes, setNotes] = useState('');
       const startTimestamp = startDateTime.getTime();
 const endTimestamp = endDateTime.getTime();
 
-      navigation.navigate('OnceListing', {
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        selectedStartTime: selectedStartTime,
-        selectedEndTime: selectedEndTime,
-        hour: hour,
-        minute: minute,
-        selectedDates: selectedDates,
-        filteredData:filteredData,
-        selectedDuration: selectedDuration,
-        
-
-    });
+navigation.navigate('OnceListing', {
+  category: 'Repeat', 
+});
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -540,16 +530,7 @@ const endTimestamp = endDateTime.getTime();
       createRepeatReminderTable();
 
       navigation.navigate('OnceListing', {
-        // startDateTime: startDateTime,
-        // endDateTime: endDateTime,
-        // selectedStartTime: selectedStartTime,
-        // selectedEndTime: selectedEndTime,
-        // hour: hour,
-        // minute: minute,
-        // selectedDuration: selectedDuration,
-        // selectedWeeks: selectedWeeks,
-        // selectedDates: selectedDates,
-        // filteredIntervals: filteredIntervals,
+        category: 'Repeat', 
       });
     } else {
       Alert.alert(

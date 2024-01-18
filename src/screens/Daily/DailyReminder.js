@@ -326,8 +326,10 @@ createRepeatReminderTable();
       toggleModal();
       createRepeatReminderTable();
 
-      navigation.navigate('OnceListing');
-    } else {
+      navigation.navigate('OnceListing', {
+        category: 'Repeat', 
+      });
+        } else {
       Alert.alert(
         'Error',
         'Please fill in all fields and ensure the reminder duration is greater than zero',

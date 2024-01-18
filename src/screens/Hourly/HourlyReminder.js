@@ -5,7 +5,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import HourlyReminderStyle from './HourlyReminderStyle';
 import ReminderScreenStyle from '../Once/ReminderScreenStyle';
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
+import SQLite from 'react-native-sqlite-storage';
 
+const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 export default function HourlyReminder({ navigation }) {
 
@@ -42,6 +44,21 @@ export default function HourlyReminder({ navigation }) {
 const reopenEndDatePicker = () => {
   setEndDatePickerVisible(true);
 };
+const createRepeatReminderTable = () => {
+  db.transaction(tx => {
+    tx.executeSql(
+      'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT, title TEXT, notes TEXT, category TEXT DEFAULT "Monthly" );',
+      [],
+      (tx, result) => {
+        console.log('repeatreminder table created successfully');
+      },
+      error => {
+        console.error('Error creating repeatreminder table:', error);
+      },
+    );
+  });
+};
+createRepeatReminderTable();
 
 const handleDateConfirm = (date, isStartDate) => {
   const currentDate = new Date(); // Get the current date and time
@@ -241,9 +258,39 @@ const isPastDate = (date) => {
         currentDateTime.setDate(currentDateTime.getDate() + 1);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-  
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            startDateTime.toString(),
+            endDateTime.toString(),
+            selectedStartTime.toLocaleTimeString(),
+            selectedEndTime.toLocaleTimeString(),
+            hour,
+            minute,
+            "1", // Daily reminder, so set a constant value for selectedDuration
+            JSON.stringify([]), // No weeks for daily reminder
+            JSON.stringify(calculatedIntervals),
+            title,
+            notes,
+            'Hourly', // Set the constant value for the "category" column
+          ],
+          (tx, result) => {
+            console.log('Reminder inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
+      createRepeatReminderTable();
+
       setIntervals(calculatedIntervals);
       toggleModal();
+      navigation.navigate('OnceListing', {
+        category: 'Repeat', 
+      });
+
     } else {
       Alert.alert(
         'Error',
@@ -369,7 +416,7 @@ const isPastDate = (date) => {
   <Text style={{...HourlyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
 
-<Modal
+{/* <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
@@ -391,7 +438,7 @@ const isPastDate = (date) => {
           </TouchableOpacity>
           
         </View>
-      </Modal>
+      </Modal> */}
       <DateTimePickerModal
   isVisible={isStartDatePickerVisible}
   mode="date"
