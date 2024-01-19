@@ -90,6 +90,8 @@ const OnceListing = ({ route }) => {
         [id],
         (tx, result) => {
           console.log('Reminder deleted successfully');
+          PushNotification.cancelLocalNotifications({ id: id.toString() });
+          
           fetchUpdatedReminders();
         },
         (error) => {

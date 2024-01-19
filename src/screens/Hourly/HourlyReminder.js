@@ -7,6 +7,7 @@ import ReminderScreenStyle from '../Once/ReminderScreenStyle';
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import SQLite from 'react-native-sqlite-storage';
 
+
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
 export default function HourlyReminder({ navigation }) {
@@ -284,7 +285,7 @@ const isPastDate = (date) => {
         );
       });
       createRepeatReminderTable();
-
+      
       setIntervals(calculatedIntervals);
       toggleModal();
       navigation.navigate('OnceListing', {

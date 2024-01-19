@@ -188,21 +188,25 @@ useEffect(() => {
             title: inputText,
           };
   
+          // Cancel existing notification before updating the reminder
+          PushNotification.cancelLocalNotifications({ id: updatedReminder.id.toString() });
+  
           db.transaction((tx) => {
             tx.executeSql(
               'UPDATE reminders SET title = ?, note = ?, date = ? WHERE id = ?',
               [updatedReminder.title, updatedReminder.note, updatedReminder.date.getTime(), updatedReminder.id],
-           (tx, result) => {
-              console.log('Reminder updated successfully');
-              PushNotification.localNotificationSchedule({
-                channelId: 'test-channel',
-                title: updatedReminder.title,
-                message: updatedReminder.note,
-                date: updatedReminder.date,
-              });
-              fetchRemindersFromDB(); // Fetch updated reminders
-              navigateToList(); // Navigate only after successful update
-            },
+              (tx, result) => {
+                console.log('Reminder updated successfully');
+                PushNotification.localNotificationSchedule({
+                  channelId: 'test-channel',
+                  title: updatedReminder.title,
+                  message: updatedReminder.note,
+                  date: updatedReminder.date,
+                  id: updatedReminder.id.toString(), // Ensure the ID is included
+                });
+                fetchRemindersFromDB(); // Fetch updated reminders
+                navigateToList(); // Navigate only after successful update
+              },
               (error) => {
                 console.log('Error updating reminder:', error);
               }
@@ -218,11 +222,13 @@ useEffect(() => {
               [inputText, noteText, dateTime.getTime()],
               (tx, result) => {
                 console.log('Reminder added successfully');
+                const newReminderId = result.insertId;
                 PushNotification.localNotificationSchedule({
                   channelId: 'test-channel',
                   title: inputText,
                   message: noteText,
                   date: dateTime,
+                  id: newReminderId.toString(), // Ensure the ID is included
                 });
                 fetchRemindersFromDB(); // Fetch updated reminders
                 navigateToList(); // Navigate only after successful insertion
@@ -247,6 +253,7 @@ useEffect(() => {
     }
   };
   
+
   
   const hideTimePicker = () => {
     setTimePickerVisible(false);

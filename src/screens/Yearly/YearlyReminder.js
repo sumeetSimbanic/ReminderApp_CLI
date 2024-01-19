@@ -8,10 +8,7 @@ import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import SQLite from 'react-native-sqlite-storage';
 import ReminderScreenStyle from '../Once/ReminderScreenStyle';
 
-
-
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
-
 
 export default function YearlyReminder({navigation}) {
   const [selectedDuration, setSelectedDuration] = useState('');
@@ -39,17 +36,12 @@ export default function YearlyReminder({navigation}) {
   const [chosenEndDate, setChosenEndDate] = useState(null);
   const [chosenStartTime, setChosenStartTime] = useState(null);
   const [chosenEndTime, setChosenEndTime] = useState(null);
-const [title, setTitle] = useState('');
-const [notes, setNotes] = useState('');
-
-  
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [hourError, setHourError] = useState('');
   const [minuteError, setMinuteError] = useState('');
-
- 
   const [isNewModalVisible, setNewModalVisible] = useState(false);
   const [intervals, setIntervals] = useState([]);
-
   const toggleModal = () => {
     setNewModalVisible(!isNewModalVisible);
   };
@@ -77,14 +69,11 @@ const [notes, setNotes] = useState('');
     { label: '3', value: '3' },
     { label: '4', value: '4' },
     { label: 'LAST', value: 'LAST' },
-    { label: 'ALL', value: 'ALL' },
-
-
-   
+    { label: 'ALL', value: 'ALL' },  
   ];
+
   const handleDateConfirm = (date, isStartDate) => {
     const currentDate = new Date(); 
-  
     if (date < currentDate) {
       date = currentDate; 
     }
@@ -155,11 +144,7 @@ const [notes, setNotes] = useState('');
     setEndTimePickerVisibility(true);
   };
   
-  // Inside your JSX, use the selected times as defaults for the pickers
- 
   
- 
-
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
   };
@@ -169,22 +154,15 @@ const [notes, setNotes] = useState('');
   };
 
   
-  // Function to hide the start time picker
   const hideStartTimePicker = () => {
     setStartTimePickerVisibility(false);
   };
 
-  // Function to handle the selected start time
  
-  // Function to show the end time picker
-
-
-  // Function to hide the end time picker
   const hideEndTimePicker = () => {
     setEndTimePickerVisibility(false);
   };
 
-  // Function to handle the selected end time
  
   const logRepeatReminderData = () => {
     db.transaction((tx) => {
@@ -206,7 +184,6 @@ const [notes, setNotes] = useState('');
     });
   };
   
-  // Call this function when you want to log the data
   
   const handleWeekSelection = (week) => {
     setSelectedWeek(week);
@@ -328,10 +305,8 @@ const [notes, setNotes] = useState('');
     });
   };
   
-  // Call this function when your application starts or when you initialize the database
   createRepeatReminderTable();
 
-  
   const setReminderTwo = () => {
     if (
       selectedStartDate &&
@@ -392,8 +367,7 @@ const [notes, setNotes] = useState('');
 
           return temp.includes(date.getDate());
       });
-      // console.log('Intervals:', intervals);
-      // console.log('Filtered Intervals:', filteredIntervals);
+      
       const filteredIntervals = filterIntervalsByDuration(filteredData, selectedDuration);
       db.transaction((tx) => {
         tx.executeSql(
@@ -409,7 +383,7 @@ const [notes, setNotes] = useState('');
             JSON.stringify(filteredIntervals),
             title,
             notes,
-            'Yearly', // Set the constant value for the "category" column
+            'Yearly', 
           ],
           (tx, result) => {
             console.log('Reminder inserted successfully');
@@ -426,11 +400,11 @@ const [notes, setNotes] = useState('');
       createRepeatReminderTable();
 
       const startTimestamp = startDateTime.getTime();
-const endTimestamp = endDateTime.getTime();
+      const endTimestamp = endDateTime.getTime();
 
-navigation.navigate('OnceListing', {
-  category: 'Repeat', 
-});
+        navigation.navigate('OnceListing', {
+          category: 'Repeat', 
+        });
       
     } else {
       console.warn('Incomplete data for calculation');
@@ -663,21 +637,7 @@ navigation.navigate('OnceListing', {
 />
     </View>
      
-        {/* <View style={MonthlyReminderStyle.rowContainer}>
-      <Text style={{ color: 'black', paddingTop: '5%' }}>WEEKS:</Text>
-
-      <ModalDropdown
-  options={weekDuration.map((item) => item.label)}
-  style={MonthlyReminderStyle.customButtonDrop}
-  defaultValue={selectedMonth !== null ? String(selectedMonth) : "Select Duration"} 
-  onSelect={(index, value) => selectMonth(index, duration[index].value)}
-  textStyle={MonthlyReminderStyle.dropdownText}
-  dropdownStyle={MonthlyReminderStyle.dropdownContainer}
-  defaultIndex={1}  
-/>
-
-
-      </View> */}
+  
       <View style={{...MonthlyReminderStyle.rowContainer}}>
       <Text style={{ color: 'black', paddingTop: '9%' }}>DAYS:</Text>
         <View style={{...MonthlyReminderStyle.monthChooser,marginLeft:"10%"}}>

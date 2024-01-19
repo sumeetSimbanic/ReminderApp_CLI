@@ -164,7 +164,6 @@ export default function MonthlyReminder({navigation}) {
     setEndTimePickerVisibility(true);
   };
 
-  // Inside your JSX, use the selected times as defaults for the pickers
 
   const hideStartDatePicker = () => {
     setStartDatePickerVisible(false);
@@ -174,7 +173,6 @@ export default function MonthlyReminder({navigation}) {
     setEndDatePickerVisible(false);
   };
 
-  // Function to hide the start time picker
   const hideStartTimePicker = () => {
     setStartTimePickerVisibility(false);
   };
@@ -302,6 +300,7 @@ export default function MonthlyReminder({navigation}) {
 
     return filteredIntervals;
   };
+  
   const createRepeatReminderTable = () => {
     db.transaction(tx => {
       tx.executeSql(
