@@ -4,6 +4,7 @@ import ModalDropdown from 'react-native-modal-dropdown';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import WeeklyReminderStyle from './WeeklyReminderStyle';
 import SQLite from 'react-native-sqlite-storage';
+import PushNotification from 'react-native-push-notification';
 
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import ReminderScreenStyle from '../Once/ReminderScreenStyle';
@@ -270,6 +271,13 @@ export default function WeeklyReminder({ navigation }) {
               date: currentDate.toDateString(),
               time: currentDate.toLocaleTimeString(),
             });
+            PushNotification.localNotificationSchedule({
+              channelId: 'test-channel',
+              title: title,
+              message: notes,
+              date: currentDate,
+            });
+        
             currentDate.setTime(currentDate.getTime() + intervalInMillis);
           }
         }

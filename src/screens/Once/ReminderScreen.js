@@ -35,7 +35,7 @@ export default function ReminderScreen({navigation,route}) {
   const [editingIndex, setEditingIndex] = useState(null); 
   const isFocused = useIsFocused();
 
-
+console.log("sss",isTimePickerVisible)
   useEffect(() => {
     initDB();
     fetchRemindersFromDB();
@@ -440,6 +440,8 @@ useEffect(() => {
   onConfirm={handleDateConfirm}
   onCancel={hideDatePicker}
   defaultDate={new Date()} 
+  minimumDate={new Date()}
+
   date={selectedDate|| new Date()} 
 
 />
@@ -454,4 +456,3 @@ const CustomButton = ({ title, onPress }) => {
     </TouchableHighlight>
   );
 };
-

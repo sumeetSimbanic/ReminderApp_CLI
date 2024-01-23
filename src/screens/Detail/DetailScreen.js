@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import SQLite from 'react-native-sqlite-storage';
 import { useNavigation } from '@react-navigation/native';
 import DetailScreenStyle from './DetailScreenStyle';
+import { BackHandler } from 'react-native';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
@@ -100,6 +101,21 @@ const DetailScreen = ({ route }) => {
       category: 'Repeat', 
     });
   };
+  useEffect(() => {
+    const handleBackButton = () => {
+      // Handle the hardware back button press here
+      navigateToListingScreen();
+      return true; // Return true to prevent the default behavior (app exit)
+    };
+
+    // Add the event listener for hardware back button press
+    BackHandler.addEventListener('hardwareBackPress', handleBackButton);
+
+    return () => {
+      // Remove the event listener when the component is unmounted
+      BackHandler.removeEventListener('hardwareBackPress', handleBackButton);
+    };
+  }, []);
   return (
    
      
@@ -148,7 +164,7 @@ const DetailScreen = ({ route }) => {
   )}   
      </View>
      <View style={DetailScreenStyle.detailContainer}>
-        <Text>NOTES: {repeatReminder.notes} weeks</Text>
+        <Text>NOTES: {repeatReminder.notes}</Text>
       </View>
      <Button title="Show Intervals" onPress={() => setIntervalsModalVisible(true)} />
       

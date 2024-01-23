@@ -6,6 +6,7 @@ import ModalDropdown from 'react-native-modal-dropdown';
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import ReminderScreenStyle from '../Once/ReminderScreenStyle';
 import SQLite from 'react-native-sqlite-storage';
+import PushNotification from 'react-native-push-notification';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
@@ -289,6 +290,14 @@ createRepeatReminderTable();
             date: currentDate.toDateString(),
             time: currentDate.toLocaleTimeString(),
           });
+
+          PushNotification.localNotificationSchedule({
+            channelId: 'test-channel',
+            title: title,
+            message: notes,
+            date: currentDate,
+          });
+      
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
         }
   

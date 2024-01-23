@@ -7,6 +7,7 @@ import { Calendar} from 'react-native-calendars';
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import SQLite from 'react-native-sqlite-storage';
 import ReminderScreenStyle from '../Once/ReminderScreenStyle';
+import PushNotification from 'react-native-push-notification';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
@@ -354,6 +355,12 @@ export default function YearlyReminder({navigation}) {
             date: currentDate.toDateString(),
             time: currentDate.toLocaleTimeString(),
           });
+          PushNotification.localNotificationSchedule({
+            channelId: 'test-channel',
+            title: title,
+            message: notes,
+            date: currentDate,
+          });
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
         }
   
@@ -461,6 +468,12 @@ export default function YearlyReminder({navigation}) {
             intervals.push({
               date: currentDate.toDateString(),
               time: currentDate.toLocaleTimeString(),
+            });
+            PushNotification.localNotificationSchedule({
+              channelId: 'test-channel',
+              title: title,
+              message: notes,
+              date: currentDate,
             });
             currentDate.setTime(currentDate.getTime() + intervalInMillis);
           }
