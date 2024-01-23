@@ -7,6 +7,7 @@ import ReminderScreenStyle from '../Once/ReminderScreenStyle';
 import MonthlyReminderStyle from '../Monthly/MonthlyReminderStyle';
 import SQLite from 'react-native-sqlite-storage';
 
+import PushNotification from 'react-native-push-notification';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
@@ -199,7 +200,15 @@ const isPastDate = (date) => {
     setEndTimePickerVisibility(true);
   };
   
-
+  const createChannels = () =>{
+    PushNotification.createChannel(
+      {
+        channelId:"test-channel",
+        channelName:"Test Channel"
+      }
+    )
+  
+  }
 
   
   const setReminder = () => {
@@ -208,7 +217,6 @@ const isPastDate = (date) => {
       selectedStartTime &&
       (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0)) &&
       title.trim() !== ''
-
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -243,22 +251,26 @@ const isPastDate = (date) => {
   
       while (currentDateTime <= endDateTime) {
         const currentDate = new Date(currentDateTime);
-        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
   
-        const endDate = new Date(currentDateTime);
-        endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
-  
-        while (currentDate <= endDate) {
+        while (currentDate <= endDateTime) {
           calculatedIntervals.push({
             date: currentDate.toDateString(),
             time: currentDate.toLocaleTimeString(),
           });
+          PushNotification.localNotificationSchedule({
+            channelId: 'test-channel',
+            title: title,
+            message: notes,
+            date: currentDate,
+          });
+  
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
         }
   
         currentDateTime.setDate(currentDateTime.getDate() + 1);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
+  
       db.transaction((tx) => {
         tx.executeSql(
           'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
@@ -284,14 +296,13 @@ const isPastDate = (date) => {
           }
         );
       });
-      createRepeatReminderTable();
-      
+  
       setIntervals(calculatedIntervals);
+      console.log('---', calculatedIntervals);
       toggleModal();
       navigation.navigate('OnceListing', {
-        category: 'Repeat', 
+        category: 'Repeat',
       });
-
     } else {
       Alert.alert(
         'Error',

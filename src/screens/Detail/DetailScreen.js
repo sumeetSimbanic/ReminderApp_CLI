@@ -96,7 +96,9 @@ const DetailScreen = ({ route }) => {
     return formattedDate;
   };
   const navigateToListingScreen = () => {
-    navigation.navigate('OnceListing');
+    navigation.navigate('OnceListing', {
+      category: 'Repeat', 
+    });
   };
   return (
    
