@@ -69,26 +69,44 @@ const OnceListing = ({route}) => {
       {cancelable: false},
     );
   };
-
-  const confirmDelete = id => {
-    const table = isOnceReminder ? 'reminders' : 'repeatreminder';
-
-    db.transaction(tx => {
+const confirmDelete = (id) => {
+  // Delete from the 'reminders' table
+  db.transaction(
+    (tx) => {
       tx.executeSql(
-        `DELETE FROM ${table} WHERE id = ?`,
+        'DELETE FROM reminders WHERE id = ?',
         [id],
         (tx, result) => {
-          console.log('Reminder deleted successfully');
-          PushNotification.cancelLocalNotifications({id: id.toString()});
-
-          fetchUpdatedReminders();
+          console.log(`Reminder deleted successfully from 'reminders' table, ID: ${id}`);
+          PushNotification.cancelLocalNotifications({ id: id.toString() });
+          fetchUpdatedReminders(); // Update the state after deletion
         },
-        error => {
-          console.log('Error deleting reminder:', error);
-        },
+        (error) => {
+          console.log('Error deleting reminder from "reminders" table:', error);
+        }
       );
-    });
-  };
+    }
+  );
+
+  // Delete from the 'repeatreminder' table
+  db.transaction(
+    (tx) => {
+      tx.executeSql(
+        'DELETE FROM repeatreminder WHERE id = ?',
+        [id],
+        (tx, result) => {
+          console.log(`Reminder deleted successfully from 'repeatreminder' table, ID: ${id}`);
+          PushNotification.cancelLocalNotifications({ id: id.toString() });
+          fetchUpdatedReminders(); // Update the state after deletion
+        },
+        (error) => {
+          console.log('Error deleting reminder from "repeatreminder" table:', error);
+        }
+      );
+    }
+  );
+};
+
 
   const fetchUpdatedReminders = () => {
     db.transaction(tx => {
@@ -182,8 +200,10 @@ const OnceListing = ({route}) => {
       <View key={item.id} style={ListingStyle.singleReminder}>
         {/* Once Reminder UI */}
         <Text>Title: {item.title || `ID: ${item.id}`}</Text>
-        <Text>Note: {item.note}</Text>
-        <Text>Date: {item.date.toLocaleString()}</Text>
+        <Text>
+            Notes: {item.note.length > 20 ? `${item.note.substring(0, 20)}...` : item.note}
+          </Text>
+                  <Text>Date: {item.date.toLocaleString()}</Text>
         <View style={ListingStyle.buttonContainer}>
           <TouchableHighlight onPress={() => editReminder(item.id)}>
             <Text style={ListingStyle.editButton}>Edit</Text>
@@ -252,9 +272,34 @@ const OnceListing = ({route}) => {
     });
   };
 
-  const editRepeatReminder = id => {
-    navigation.navigate('Home');
+  const editRepeatReminder = (id) => {
+    const repeatReminder = repeatReminders.find((item) => item.id === id);
+  
+    if (repeatReminder) {
+      const categoryScreenMap = {
+        Hourly: 'Hourly',
+        Daily: 'Daily',
+        Weekly: 'Weekly',
+        Monthly: 'Monthly',
+        Yearly: 'Yearly',
+        // Add more categories as needed
+      };
+  
+      const categoryScreen = categoryScreenMap[repeatReminder.category];
+  
+      if (categoryScreen) {
+        // Pass both the reminder ID and the repeat reminder data to the screen
+        navigation.navigate(categoryScreen, {
+          reminderId: id,
+          reminderData: repeatReminder,
+        });
+      } else {
+        // Handle unknown category
+        console.warn(`Unknown category: ${repeatReminder.category}`);
+      }
+    }
   };
+  
   useEffect(() => {
     const handleBackButton = () => {
       // Handle the hardware back button press here

@@ -159,7 +159,7 @@ useEffect(() => {
     setSelectedDate(null);
     setSelectedTime(null);
     setShowDateButtons(false);
-    setTimePickerVisible(false); 
+    // setTimePickerVisible(false); 
     setDatePickerVisible(false); 
     setIsTimeCategorySelected(false);
   };
@@ -202,7 +202,13 @@ useEffect(() => {
                   title: updatedReminder.title,
                   message: updatedReminder.note,
                   date: updatedReminder.date,
-                  id: updatedReminder.id.toString(), // Ensure the ID is included
+                  id: updatedReminder.id.toString(),
+                  visibility: 'public', 
+                  priority: 'high',
+                  importance: 4,
+                  wake_screen: true,
+
+ 
                 });
                 fetchRemindersFromDB(); // Fetch updated reminders
                 navigateToList(); // Navigate only after successful update
@@ -262,6 +268,7 @@ useEffect(() => {
 
 
   const setTodayTime = () => {
+    console.log("hello")
     const today = new Date();
   
     today.setSeconds(0);
@@ -325,7 +332,7 @@ useEffect(() => {
       return (
         <View style={ReminderScreenStyle.chosenTimeCategoryContainer}>
           <Text>Chosen Date: {selectedDate.toDateString()}</Text>
-          <Text>Chosen Time: {selectedTime.toLocaleTimeString()}</Text>
+          <Text>Chosen Time: {selectedTime.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric' })}</Text>
          
         </View>
       );
@@ -339,8 +346,8 @@ useEffect(() => {
  
   return (
     <View>
-              <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text style={{padding:"1%"}}>LISTS</Text></TouchableHighlight>
-              {/* <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToRepeatList}><Text>Repeat</Text></TouchableHighlight> */}
+      <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToList}><Text style={{padding:"1%"}}>LISTS</Text></TouchableHighlight>
+      {/* <TouchableHighlight style={ReminderScreenStyle.title} onPress={navigateToRepeatList}><Text>Repeat</Text></TouchableHighlight> */}
 
       <ScrollView contentContainerStyle={ReminderScreenStyle.container}>
         <Text style={ReminderScreenStyle.heading}>ReminderScreen</Text>
@@ -423,7 +430,7 @@ useEffect(() => {
     
 
 
-<TimePickerModal
+<DateTimePickerModal
   isVisible={isTimePickerVisible}
   mode="time"
   onConfirm={handleTimeConfirm}

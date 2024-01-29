@@ -106,13 +106,13 @@ const handleDateConfirm = (date, isStartDate) => {
  
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
-    setChosenStartTime(time.toLocaleTimeString()); // Convert to a string representation
+    setChosenStartTime(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); // Convert to a string representation
     hideStartTimePicker();
   };
   
   const handleEndTimeConfirm = (time) => {
     setSelectedEndTime(time);
-    setChosenEndTime(time.toLocaleTimeString()); // Convert to a string representation
+    setChosenEndTime(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));// Convert to a string representation
     hideEndTimePicker();
     setIsEndTimeSelected(true); // Set the flag when the end time is selected
 
@@ -296,6 +296,10 @@ createRepeatReminderTable();
             title: title,
             message: notes,
             date: currentDate,
+            visibility: 'public', 
+            priority: 'high',
+            importance: 4,
+            wake_screen: true,
           });
       
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
