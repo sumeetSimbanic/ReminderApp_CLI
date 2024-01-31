@@ -234,7 +234,11 @@ useEffect(() => {
                   title: inputText,
                   message: noteText,
                   date: dateTime,
-                  id: newReminderId.toString(), // Ensure the ID is included
+                  id: newReminderId.toString(),
+                  visibility: 'public', 
+                  priority: 'high',
+                  importance: 4,
+                  wake_screen: true, // Ensure the ID is included
                 });
                 fetchRemindersFromDB(); // Fetch updated reminders
                 navigateToList(); // Navigate only after successful insertion

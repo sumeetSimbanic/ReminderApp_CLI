@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableHighlight, TouchableOpacity, Dimensions ,Button,Modal,ScrollView,TextInput,Alert} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -11,7 +11,7 @@ import PushNotification from 'react-native-push-notification';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
-export default function HourlyReminder({ navigation ,route}) {
+export default function HourlyReminder({ navigation }) {
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
@@ -34,8 +34,6 @@ export default function HourlyReminder({ navigation ,route}) {
   const [minuteError, setMinuteError] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
   const [intervals, setIntervals] = useState([]);
-  const [editing, setEditing] = useState(false);
-  const [reminderId, setReminderId] = useState(null);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -48,16 +46,6 @@ export default function HourlyReminder({ navigation ,route}) {
 const reopenEndDatePicker = () => {
   setEndDatePickerVisible(true);
 };
-
-
-// UseEffect to fetch reminder details when navigating to the screen
-useEffect(() => {
-  const { reminderId } = route.params;
-  if (reminderId) {
-    setReminderId(reminderId);
-    fetchReminderDetails(reminderId);
-  }
-}, [route.params]);
 const createRepeatReminderTable = () => {
   db.transaction(tx => {
     tx.executeSql(
@@ -114,7 +102,7 @@ const handleDateConfirm = (date, isStartDate) => {
   
   const handleStartTimeConfirm = (time) => {
     setSelectedStartTime(time);
-    setChosenStartTime(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setChosenStartTime(time.toLocaleTimeString()); // Convert to a string representation
     hideStartTimePicker();
   };
   
@@ -143,7 +131,7 @@ const handleDateConfirm = (date, isStartDate) => {
   
   const handleEndTimeConfirm = (time) => {
     setSelectedEndTime(time);
-    setChosenEndTime(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setChosenEndTime(time.toLocaleTimeString());
     hideEndTimePicker();
     setIsEndTimeSelected(true); // Set the flag when the end time is selected
   };
@@ -199,39 +187,6 @@ const handleDateConfirm = (date, isStartDate) => {
     );
   }
 };
-const fetchReminderDetails = (id) => {
-  db.transaction((tx) => {
-    tx.executeSql(
-      'SELECT * FROM repeatreminder WHERE id = ?',
-      [id],
-      (tx, result) => {
-        if (result.rows.length > 0) {
-          const reminder = result.rows.item(0);
-          // Convert date and time strings to JavaScript Date objects
-          const startDate = reminder.startDateTime ? new Date(reminder.startDateTime) : null;
-          const endDate = reminder.endDateTime ? new Date(reminder.endDateTime) : null;
-          const startTime = reminder.selectedStartTime ? new Date(reminder.selectedStartTime) : null;
-          const endTime = reminder.selectedEndTime ? new Date(reminder.selectedEndTime) : null;
-
-          // Set the state with the fetched reminder details
-          setChosenStartDate(startDate);
-          setChosenEndDate(endDate);
-          setChosenStartTime(startTime);
-          setChosenEndTime(endTime);
-          setHour(reminder.hour);
-          setMinute(reminder.minute);
-          setTitle(reminder.title);
-          setNotes(reminder.notes);
-          setEditing(true);
-        }
-      },
-      (error) => {
-        console.error('Error fetching reminder details:', error);
-      }
-    );
-  });
-};
-
 
 const isPastDate = (date) => {
   const currentDate = new Date();
@@ -262,7 +217,6 @@ const isPastDate = (date) => {
       selectedStartTime &&
       (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0)) &&
       title.trim() !== ''
-
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -297,98 +251,58 @@ const isPastDate = (date) => {
   
       while (currentDateTime <= endDateTime) {
         const currentDate = new Date(currentDateTime);
-        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
   
-        const endDate = new Date(currentDateTime);
-        endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
-  
-        while (currentDate <= endDate) {
+        while (currentDate <= endDateTime) {
           calculatedIntervals.push({
             date: currentDate.toDateString(),
             time: currentDate.toLocaleTimeString(),
           });
-           PushNotification.localNotificationSchedule({
-              channelId: 'test-channel',
-              title: title,
-              message: notes,
-              date: currentDate,
-              visibility: 'public', 
-              priority: 'high',
-              importance: 4,
-              wake_screen: true,
-            });
+          PushNotification.localNotificationSchedule({
+            channelId: 'test-channel',
+            title: title,
+            message: notes,
+            date: currentDate,
+          });
+  
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
         }
   
         currentDateTime.setDate(currentDateTime.getDate() + 1);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-      if (editing) {
-        // If editing, update the existing reminder
-        db.transaction(tx => {
-          tx.executeSql(
-            'UPDATE repeatreminder SET startDateTime=?, endDateTime=?, selectedStartTime=?, selectedEndTime=?, hour=?, minute=?, selectedDuration=?, selectedWeeks=?, filteredIntervals=?, title=?, notes=? WHERE id=?;',
-            [
-              startDateTime.toString(),
-              endDateTime.toString(),
-              selectedStartTime.toLocaleTimeString(),
-              selectedEndTime.toLocaleTimeString(),
-              hour,
-              minute,
-              "1", // Daily reminder, so set a constant value for selectedDuration
-              JSON.stringify([]), // No weeks for daily reminder
-              JSON.stringify(calculatedIntervals),
-              title,
-              notes,
-              reminderId,
-            ],
-            (tx, result) => {
-              console.log('Reminder updated successfully');
-            },
-            error => {
-              console.error('Error updating reminder:', error);
-            }
-          );
-        });
-      } else {
-        // If not editing, insert a new reminder
-        db.transaction(tx => {
-          tx.executeSql(
-            'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-            [
-              startDateTime.toString(),
-              endDateTime.toString(),
-              selectedStartTime.toLocaleTimeString(),
-              selectedEndTime.toLocaleTimeString(),
-              hour,
-              minute,
-              "1", // Daily reminder, so set a constant value for selectedDuration
-              JSON.stringify([]), // No weeks for daily reminder
-              JSON.stringify(calculatedIntervals),
-              title,
-              notes,
-              'Hourly', // Set the constant value for the "category" column
-            ],
-            (tx, result) => {
-              console.log('Reminder inserted successfully');
-            },
-            error => {
-              console.error('Error inserting into repeatreminder table:', error);
-            }
-          );
-        });
-      }
   
-      createRepeatReminderTable();
-
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+          [
+            startDateTime.toString(),
+            endDateTime.toString(),
+            selectedStartTime.toLocaleTimeString(),
+            selectedEndTime.toLocaleTimeString(),
+            hour,
+            minute,
+            "1", // Daily reminder, so set a constant value for selectedDuration
+            JSON.stringify([]), // No weeks for daily reminder
+            JSON.stringify(calculatedIntervals),
+            title,
+            notes,
+            'Hourly', // Set the constant value for the "category" column
+          ],
+          (tx, result) => {
+            console.log('Reminder inserted successfully');
+          },
+          (error) => {
+            console.error('Error inserting into repeatreminder table:', error);
+          }
+        );
+      });
+  
       setIntervals(calculatedIntervals);
-      console.log("--",calculatedIntervals)
-      
+      console.log('---', calculatedIntervals);
       toggleModal();
       navigation.navigate('OnceListing', {
-        category: 'Repeat', 
+        category: 'Repeat',
       });
-
     } else {
       Alert.alert(
         'Error',
@@ -453,16 +367,8 @@ const isPastDate = (date) => {
       </TouchableHighlight>
 
 </View>
-<Text style={HourlyReminderStyle.text}>
-  Between: {chosenStartDate?.toLocaleDateString() || "_"} to{" "}
-  {chosenEndDate?.toLocaleDateString() || "_"}
-</Text>
-
-<Text style={HourlyReminderStyle.text}>
-  Between {chosenStartTime?.toLocaleTimeString() || "_"} to{" "}
-  {chosenEndTime?.toLocaleTimeString() || "_"} every {hour || "_"} hour {minute || "_"} mins
-</Text>
-
+      <Text style={HourlyReminderStyle.text}>Between: {chosenStartDate || "_" } to {chosenEndDate || "_"}</Text>
+      <Text style={HourlyReminderStyle.text}>Between {chosenStartTime || "_" } to {chosenEndTime || "_" } every {hour || "_"} hour {minute || "_"} mins</Text>
       <View style={MonthlyReminderStyle.rowContainer}>
 <Text style={{ color: 'black', marginTop: '5%' }}>Title:</Text>
         <TextInput
@@ -499,21 +405,21 @@ const isPastDate = (date) => {
         
       </View>
       <View style={HourlyReminderStyle.rowContainer}>
-  <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
-  <View style={HourlyReminderStyle.pickerContainer}>
-    <View>
-      <TouchableHighlight style={HourlyReminderStyle.customButton} onPress={showStartTimePicker}>
-        <Text style={HourlyReminderStyle.customButtonText}>Start Time</Text>
-      </TouchableHighlight>
-    </View>
-    <View>
-      <TouchableHighlight style={HourlyReminderStyle.customButton} onPress={showEndTimePicker}>
-        <Text style={HourlyReminderStyle.customButtonText}>End Time</Text>
-      </TouchableHighlight>
-    </View>
-  </View>
-</View>
-
+        <Text style={{ color: 'black', paddingTop: '8%' }}>Between:</Text>
+        <View style={HourlyReminderStyle.pickerContainer}>
+          <View>
+            <TouchableHighlight style={HourlyReminderStyle.customButton} onPress={showStartTimePicker}>
+      <Text style={HourlyReminderStyle.customButtonText}>Start Time</Text>
+    </TouchableHighlight>
+          </View>
+          <View>
+            <TouchableHighlight style={HourlyReminderStyle.customButton} onPress={showEndTimePicker}>
+      <Text style={HourlyReminderStyle.customButtonText}>End Time</Text>
+    </TouchableHighlight>
+          </View>
+        </View>
+        
+      </View>
     
       {renderHourMinuteInputs()}
 
