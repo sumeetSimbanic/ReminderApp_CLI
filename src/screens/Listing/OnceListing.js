@@ -13,7 +13,6 @@ import { BackHandler } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
 import {useNavigation} from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
-
 import ListingStyle from './ListingStyle';
 
 const db = SQLite.openDatabase({name: 'reminders.db', location: 'default'});
@@ -21,6 +20,7 @@ const db = SQLite.openDatabase({name: 'reminders.db', location: 'default'});
 const OnceListing = ({route}) => {
   const [onceReminders, setOnceReminders] = useState([]);
   const [repeatReminders, setRepeatReminders] = useState([]);
+  
   const [showEdit, setShowEdit] = useState(true);
   const [isOnceReminder, setIsOnceReminder] = useState(true);
   const navigation = useNavigation();
@@ -222,9 +222,11 @@ const confirmDelete = (id) => {
         <TouchableHighlight onPress={() => navigateToDetailScreen(item.id)}>
           <View>
             <Text>Title: {item.title}</Text>
+            {item.notes !== null && ( // Add a check for null or undefined
             <Text>
-            Notes: {item.notes.length > 20 ? `${item.notes.substring(0, 20)}...` : item.notes}
-          </Text>
+              Notes: {item.notes.length > 20 ? `${item.notes.substring(0, 20)}...` : item.notes}
+            </Text>
+          )}
             <Text>Category: {item.category}</Text>
             <Text>
               Date:{formatDate(item.startDateTime)} to{' '}
@@ -288,7 +290,7 @@ const confirmDelete = (id) => {
       const categoryScreen = categoryScreenMap[repeatReminder.category];
   
       if (categoryScreen) {
-        // Pass both the reminder ID and the repeat reminder data to the screen
+        // Check if route.params is defined before accessing its properties
         navigation.navigate(categoryScreen, {
           reminderId: id,
           reminderData: repeatReminder,
@@ -297,8 +299,12 @@ const confirmDelete = (id) => {
         // Handle unknown category
         console.warn(`Unknown category: ${repeatReminder.category}`);
       }
+    } else {
+      // Handle case where repeatReminder is not found
+      console.warn(`Repeat reminder not found with ID: ${id}`);
     }
   };
+  
   
   useEffect(() => {
     const handleBackButton = () => {

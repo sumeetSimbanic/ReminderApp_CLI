@@ -328,7 +328,7 @@ export default function WeeklyReminder({ navigation }) {
     } else {
       Alert.alert(
         'Error',
-        'Incomplete data to set Reminder',
+        'Please select a start date, end date, start time, and ensure the reminder duration is greater than zero',
         [
           {
             text: 'OK',
@@ -590,6 +590,8 @@ export default function WeeklyReminder({ navigation }) {
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, true)}
   onCancel={hideStartDatePicker}
+  minimumDate={new Date()} // Disable past dates for start date picker
+
   date={selectedStartDate || new Date()} // Use selectedStartDate as the default value
 />
 
@@ -598,6 +600,8 @@ export default function WeeklyReminder({ navigation }) {
   mode="date"
   onConfirm={(date) => handleDateConfirm(date, false)}
   onCancel={hideEndDatePicker}
+  minimumDate={selectedStartDate || new Date()} // Disable past dates and set minimum date for end date picker
+
   date={selectedEndDate || new Date()} // Use selectedEndDate as the default value
 />
 

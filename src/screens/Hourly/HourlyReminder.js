@@ -217,6 +217,7 @@ const isPastDate = (date) => {
       selectedStartTime &&
       (selectedEndDate || (hour !== '' && minute !== '' && parseInt(hour) > 0 && parseInt(minute) > 0)) &&
       title.trim() !== ''
+
     ) {
       const startDateTime = new Date(
         selectedStartDate.getFullYear(),
@@ -251,8 +252,12 @@ const isPastDate = (date) => {
   
       while (currentDateTime <= endDateTime) {
         const currentDate = new Date(currentDateTime);
+        currentDate.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
   
-        while (currentDate <= endDateTime) {
+        const endDate = new Date(currentDateTime);
+        endDate.setHours(selectedEndTime.getHours(), selectedEndTime.getMinutes());
+  
+        while (currentDate <= endDate) {
           calculatedIntervals.push({
             date: currentDate.toDateString(),
             time: currentDate.toLocaleTimeString(),
@@ -263,14 +268,12 @@ const isPastDate = (date) => {
             message: notes,
             date: currentDate,
           });
-  
           currentDate.setTime(currentDate.getTime() + intervalInMillis);
         }
   
         currentDateTime.setDate(currentDateTime.getDate() + 1);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-  
       db.transaction((tx) => {
         tx.executeSql(
           'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
@@ -296,13 +299,16 @@ const isPastDate = (date) => {
           }
         );
       });
-  
+      createRepeatReminderTable();
+
       setIntervals(calculatedIntervals);
-      console.log('---', calculatedIntervals);
+      console.log("--",calculatedIntervals)
+      
       toggleModal();
       navigation.navigate('OnceListing', {
-        category: 'Repeat',
+        category: 'Repeat', 
       });
+
     } else {
       Alert.alert(
         'Error',
@@ -428,29 +434,7 @@ const isPastDate = (date) => {
   <Text style={{...HourlyReminderStyle.customButtonText,fontWeight:"bold"}}>Done</Text>
 </TouchableOpacity>
 
-{/* <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => {
-          setModalVisible(false);
-        }}
-      >
-        <View style={HourlyReminderStyle.modalContainer}>
-          <ScrollView>
 
-          <Text style={HourlyReminderStyle.modalTitle}>Intervals:</Text>
-            {intervals.map((interval, index) => (
-              <Text key={index} style={HourlyReminderStyle.modalText}>{`${interval.date} - ${interval.time}`}</Text>
-              ))}
-          </ScrollView>
-
-          <TouchableOpacity style={HourlyReminderStyle.closeButton} onPress={toggleModal}>
-            <Text style={{ color: 'white' }}>Close</Text>
-          </TouchableOpacity>
-          
-        </View>
-      </Modal> */}
       <DateTimePickerModal
   isVisible={isStartDatePickerVisible}
   mode="date"

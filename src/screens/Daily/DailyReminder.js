@@ -10,7 +10,9 @@ import PushNotification from 'react-native-push-notification';
 
 const db = SQLite.openDatabase({ name: 'reminders.db', location: 'default' });
 
-export default function DailyReminder({ navigation }) {
+export default function DailyReminder({ navigation,route }) {
+  const reminderId = route.params ? route.params.reminderId : null;
+const [notificationIds, setNotificationIds] = useState([]);
 
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
@@ -189,22 +191,8 @@ const handleDateConfirm = (date, isStartDate) => {
     );
   }
 };
-const createRepeatReminderTable = () => {
-  db.transaction(tx => {
-    tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT, title TEXT, notes TEXT, category TEXT DEFAULT "Monthly" );',
-      [],
-      (tx, result) => {
-        console.log('repeatreminder table created successfully');
-      },
-      error => {
-        console.error('Error creating repeatreminder table:', error);
-      },
-    );
-  });
-};
 
-createRepeatReminderTable();
+
   const showStartTimePicker = () => {
     setStartTimePickerVisibility(true);
   };
@@ -308,36 +296,64 @@ createRepeatReminderTable();
         currentDateTime.setDate(currentDateTime.getDate() + dailyDurationInDays);
         currentDateTime.setHours(selectedStartTime.getHours(), selectedStartTime.getMinutes());
       }
-  
-      db.transaction((tx) => {
-        tx.executeSql(
-          'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute,  selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-          [
-            startDateTime.toString(),
-            endDateTime.toString(),
-            selectedStartTime.toLocaleTimeString(),
-            endTime.toLocaleTimeString(),
-            hour,
-            minute,
-            selectedDailyDuration, // Daily reminder, so set a constant value for selectedDuration
-            JSON.stringify([]), // No weeks for daily reminder
-            JSON.stringify(calculatedIntervals),
-            title,
-            notes,
-            'Daily', // Set the constant value for the "category" column
-          ],
-          (tx, result) => {
-            console.log('Reminder inserted successfully');
-          },
-          (error) => {
-            console.error('Error inserting into repeatreminder table:', error);
-          }
-        );
-      });
+      if (reminderId) {
+        // If reminderId is present, update the existing reminder
+        db.transaction((tx) => {
+          tx.executeSql(
+            'UPDATE repeatreminder SET startDateTime=?, endDateTime=?, selectedStartTime=?, selectedEndTime=?, hour=?, minute=?, selectedDuration=?, selectedWeeks=?, filteredIntervals=?, title=?, notes=? WHERE id=?;',
+            [
+              startDateTime.toString(),
+              endDateTime.toString(),
+              selectedStartTime.toLocaleTimeString(),
+              endTime.toLocaleTimeString(),
+              hour,
+              minute,
+              selectedDailyDuration,
+              JSON.stringify([]),
+              JSON.stringify(calculatedIntervals),
+              title,
+              notes,
+              reminderId, // Use the reminderId for updating
+            ],
+            (tx, result) => {
+              console.log('Reminder updated successfully');
+            },
+            (error) => {
+              console.error('Error updating repeatreminder table:', error);
+            }
+          );
+        });
+      } else {
+        // If no reminderId is present, insert a new reminder
+        db.transaction((tx) => {
+          tx.executeSql(
+            'INSERT INTO repeatreminder (startDateTime, endDateTime, selectedStartTime, selectedEndTime, hour, minute, selectedDuration, selectedWeeks, filteredIntervals, title, notes, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+            [
+              startDateTime.toString(),
+              endDateTime.toString(),
+              selectedStartTime.toLocaleTimeString(),
+              endTime.toLocaleTimeString(),
+              hour,
+              minute,
+              selectedDailyDuration,
+              JSON.stringify([]),
+              JSON.stringify(calculatedIntervals),
+              title,
+              notes,
+              'Daily',
+            ],
+            (tx, result) => {
+              console.log('Reminder inserted successfully');
+            },
+            (error) => {
+              console.error('Error inserting into repeatreminder table:', error);
+            }
+          );
+        });
+      }
   
       setIntervals(calculatedIntervals);
       toggleModal();
-      createRepeatReminderTable();
 
       navigation.navigate('OnceListing', {
         category: 'Repeat', 
@@ -345,7 +361,7 @@ createRepeatReminderTable();
         } else {
       Alert.alert(
         'Error',
-        'Please fill in all fields and ensure the reminder duration is greater than zero',
+        'Please select a start date, end date, start time, and ensure the reminder duration is greater than zero',
         [
           {
             text: 'OK',

@@ -17,7 +17,6 @@ export default function ReminderScreen({navigation,route}) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [inputText, setInputText] = useState('');
   const isEditingMode = route.params && route.params.reminderId;
-
   const [noteText, setNoteText] = useState('');
   const [showDateButtons, setShowDateButtons] = useState(false);
   const [selectedRepeatOption, setSelectedRepeatOption] = useState(null);
@@ -39,6 +38,7 @@ console.log("sss",isTimePickerVisible)
   useEffect(() => {
     initDB();
     fetchRemindersFromDB();
+    createRepeatReminderTable();
   }, []);
 
   const initDB = () => {
@@ -55,7 +55,20 @@ console.log("sss",isTimePickerVisible)
       );
     });
   };
-
+  const createRepeatReminderTable = () => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS repeatreminder (id INTEGER PRIMARY KEY AUTOINCREMENT, startDateTime TEXT, endDateTime TEXT, selectedStartTime TEXT, selectedEndTime TEXT, hour TEXT, minute TEXT, selectedDates TEXT, selectedDuration TEXT, selectedWeeks TEXT, filteredIntervals TEXT, title TEXT, notes TEXT, category TEXT DEFAULT "Monthly", notificationIds TEXT);',
+        [],
+        (tx, result) => {
+          console.log('repeatreminder table created successfully');
+        },
+        error => {
+          console.error('Error creating repeatreminder table:', error);
+        },
+      );
+    });
+  };
   
   const fetchRemindersFromDB = () => {
     db.transaction((tx) => {
